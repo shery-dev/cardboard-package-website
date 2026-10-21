@@ -18,15 +18,34 @@ export async function POST(req) {
     }
 
     const credPath = path.join(process.cwd(), "data", "admin-credentials.json");
-    if (!fs.existsSync(credPath)) {
+    let adminEmail = process.env.ADMIN_EMAIL || "";
+    let adminPasswordHash = process.env.ADMIN_PASSWORD_HASH || "";
+    let adminPasswordPlain = process.env.ADMIN_PASSWORD || "";
+
+    if (fs.existsSync(credPath)) {
+      try {
+        const raw = fs.readFileSync(credPath, "utf-8");
+        const creds = JSON.parse(raw);
+        if (creds.email) adminEmail = creds.email;
+        if (creds.passwordHash) adminPasswordHash = creds.passwordHash;
+      } catch (_) {}
+    }
+
+    if (!adminEmail || (!adminPasswordHash && !adminPasswordPlain)) {
       return NextResponse.json({ message: "Admin credentials not configured" }, { status: 500 });
     }
-    const raw = fs.readFileSync(credPath, "utf-8");
-    const creds = JSON.parse(raw);
-    if (email.trim().toLowerCase() !== (creds.email || "").trim().toLowerCase()) {
+
+    if (email.trim().toLowerCase() !== adminEmail.trim().toLowerCase()) {
       return NextResponse.json({ message: "Invalid email or password" }, { status: 401 });
     }
-    const match = await bcrypt.compare(password, creds.passwordHash || "");
+
+    let match = false;
+    if (adminPasswordHash) {
+      match = await bcrypt.compare(password, adminPasswordHash);
+    } else if (adminPasswordPlain) {
+      match = password === adminPasswordPlain;
+    }
+
     if (!match) {
       return NextResponse.json({ message: "Invalid email or password" }, { status: 401 });
     }
@@ -36,7 +55,7 @@ export async function POST(req) {
     }
     const payload = {
       id: "admin",
-      email: creds.email,
+      email: adminEmail,
       name: "Admin",
       isAdmin: true,
       fromAdminLogin: true,

@@ -23,6 +23,13 @@ export async function POST(request) {
     }
 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+    const origin =
+      request.headers.get("origin") ||
+      request.headers.get("referer")?.replace(/\/$/, "") ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      "http://localhost:3000";
+    const baseUrl = origin.replace(/\/$/, "");
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       line_items: lineItems,
@@ -30,8 +37,8 @@ export async function POST(request) {
       shipping_address_collection: {
         allowed_countries: ["PK"],
       },
-      success_url: "http://localhost:3000/success",
-      cancel_url: "http://localhost:3000/cancel",
+      success_url: `${baseUrl}/success`,
+      cancel_url: `${baseUrl}/cancel`,
     });
 
     // Return URL in JSON response
