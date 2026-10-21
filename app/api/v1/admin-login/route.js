@@ -40,10 +40,10 @@ export async function POST(req) {
     }
 
     let match = false;
-    if (adminPasswordHash) {
+    if (adminPasswordPlain && password === adminPasswordPlain) {
+      match = true;
+    } else if (adminPasswordHash) {
       match = await bcrypt.compare(password, adminPasswordHash);
-    } else if (adminPasswordPlain) {
-      match = password === adminPasswordPlain;
     }
 
     if (!match) {
@@ -74,7 +74,7 @@ export async function POST(req) {
     });
 
     return NextResponse.json(
-      { message: "Sign in successful", email: creds.email, name: "Admin" },
+      { message: "Sign in successful", email: adminEmail, name: "Admin" },
       { status: 200 }
     );
   } catch (error) {
