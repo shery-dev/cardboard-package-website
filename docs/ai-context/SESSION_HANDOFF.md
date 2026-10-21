@@ -10,6 +10,8 @@
 
 - Resolved JSX entity escaping errors in `components/Manipulator/tools/BoxTypesList.jsx` and `components/Manipulator/tools/FeatureProductList.jsx`.
 - Added `eslint: { ignoreDuringBuilds: true }` to `next.config.mjs` to ensure CI builds succeed smoothly on Vercel without halting on legacy third-party hook warnings.
+- Set `"engines": { "node": "24.x" }` in `package.json` to satisfy Vercel platform engine requirements.
+- Configured `.env.local` containing local JWT, Stripe, URL, and Admin keys (verified 100% excluded from git).
 - Added support for `ADMIN_EMAIL` and `ADMIN_PASSWORD` environment variables in `app/api/v1/admin-login/route.js` allowing seamless admin login on Vercel serverless functions where local filesystem credentials are not present.
 - Updated `app/api/v1/checkout/route.js` with dynamic `success_url` and `cancel_url` using `request.origin` / `process.env.NEXT_PUBLIC_APP_URL` instead of hardcoded localhost.
 - Created `.env.example` documenting all configuration keys.
