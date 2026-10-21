@@ -10,6 +10,7 @@
 
 - Resolved JSX entity escaping errors in `components/Manipulator/tools/BoxTypesList.jsx` and `components/Manipulator/tools/FeatureProductList.jsx`.
 - Added `eslint: { ignoreDuringBuilds: true }` to `next.config.mjs` to ensure CI builds succeed smoothly on Vercel without halting on legacy third-party hook warnings.
+- Fixed `ReferenceError: creds is not defined` and password matching logic in `app/api/v1/admin-login/route.js`. Replaced out-of-scope `creds.email` with `adminEmail` and prioritized `adminPasswordPlain` match before fallback bcrypt comparison. Verified 200 OK login response locally.
 - Set `"engines": { "node": "24.x" }` in `package.json` to satisfy Vercel platform engine requirements.
 - Configured `.env.local` containing local JWT, Stripe, URL, and Admin keys (verified 100% excluded from git).
 - Added support for `ADMIN_EMAIL` and `ADMIN_PASSWORD` environment variables in `app/api/v1/admin-login/route.js` allowing seamless admin login on Vercel serverless functions where local filesystem credentials are not present.
