@@ -1,0 +1,19 @@
+
+services:
+  cardboardpackage.com:
+    container_name: cardboardpackage
+    image: ammar4372/cardboardpackage
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      NODE_ENV: production
+    env_file:
+      - .env.local
+    ports:
+      - 3001:3000
+    volumes:
+      - images:/usr/src/app/public/uploads/
+    restart: always
+volumes:
+  images:

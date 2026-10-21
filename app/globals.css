@@ -1,0 +1,260 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+	font-family: var(--font-inter);
+	background: #E8E2DB;
+}
+
+.img_wrap {
+	width: 80px;
+	height: 80px;
+	border: 1px solid #eee;
+	cursor: pointer;
+}
+
+.img_wrap img {
+	width: 70px;
+	height: 70px;
+	object-fit: contain;
+}
+
+/* Manipulator style here */
+
+.border-hover-effect {
+	position: relative;
+	overflow: hidden;
+}
+
+.border-hover-effect::after {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	height: 2px;
+	background-color: #1A3263;
+	transform: scaleX(0);
+	transform-origin: bottom right;
+	transition: transform 0.3s ease-out;
+}
+
+.border-hover-effect:hover::after {
+	transform: scaleX(1);
+	transform-origin: bottom left;
+}
+
+/* styles/globals.css - panel selection outline, no animation to avoid blinking */
+.selected {
+	stroke: rgb(153, 250, 153);
+	stroke-width: 2px;
+	animation: none;
+}
+
+/* toggle button css */
+
+.switch {
+	font-size: 17px;
+	position: relative;
+	display: inline-block;
+	width: 64px;
+	height: 34px;
+}
+
+.switch input {
+	opacity: 0;
+	width: 0;
+	height: 0;
+}
+
+.slider {
+	position: absolute;
+	cursor: pointer;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background-color: #22c55e;
+	transition: .4s;
+	border-radius: 30px;
+}
+
+.slider:before {
+	position: absolute;
+	content: "";
+	height: 30px;
+	width: 30px;
+	border-radius: 20px;
+	left: 2px;
+	bottom: 2px;
+	z-index: 2;
+	background-color: #e8e8e8;
+	transition: .4s;
+}
+
+.input:checked+.slider {
+	background-color: #ef4444;
+}
+
+.input:focus+.slider {
+	box-shadow: 0 0 1px #22c55e;
+}
+
+.input:checked+.slider:before {
+	transform: translateX(30px);
+}
+
+/* loader style */
+:root {
+    --hue: 223;
+    --bg: hsl(var(--hue), 90%, 90%);
+    --fg: hsl(var(--hue), 90%, 10%);
+    --trans-dur: 0.3s;
+}
+
+.smiley {
+    width: 8em;
+    height: 8em;
+}
+
+.smiley__eye1,
+.smiley__eye2,
+.smiley__mouth1,
+.smiley__mouth2 {
+    animation: eye1 3s ease-in-out infinite;
+}
+
+.smiley__eye1,
+.smiley__eye2 {
+    transform-origin: 64px 64px;
+}
+
+.smiley__eye2 {
+    animation-name: eye2;
+}
+
+.smiley__mouth1 {
+    animation-name: mouth1;
+}
+
+.smiley__mouth2 {
+    animation-name: mouth2;
+    visibility: hidden;
+}
+
+/* Dark theme */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: hsl(var(--hue), 90%, 10%);
+        --fg: hsl(var(--hue), 90%, 90%);
+    }
+}
+
+/* Animations */
+@keyframes eye1 {
+    from {
+        transform: rotate(-260deg) translate(0, -56px);
+    }
+
+    50%,
+    60% {
+        animation-timing-function: cubic-bezier(0.17, 0, 0.58, 1);
+        transform: rotate(-40deg) translate(0, -56px) scale(1);
+    }
+
+    to {
+        transform: rotate(225deg) translate(0, -56px) scale(0.35);
+    }
+}
+
+@keyframes eye2 {
+    from {
+        transform: rotate(-260deg) translate(0, -56px);
+    }
+
+    50% {
+        transform: rotate(40deg) translate(0, -56px) rotate(-40deg) scale(1);
+    }
+
+    52.5% {
+        transform: rotate(40deg) translate(0, -56px) rotate(-40deg) scale(1, 0);
+    }
+
+    55%,
+    70% {
+        animation-timing-function: cubic-bezier(0, 0, 0.28, 1);
+        transform: rotate(40deg) translate(0, -56px) rotate(-40deg) scale(1);
+    }
+
+    to {
+        transform: rotate(150deg) translate(0, -56px) scale(0.4);
+    }
+}
+
+@keyframes eyeBlink {
+
+    from,
+    25%,
+    75%,
+    to {
+        transform: scaleY(1);
+    }
+
+    50% {
+        transform: scaleY(0);
+    }
+}
+
+@keyframes mouth1 {
+    from {
+        animation-timing-function: ease-in;
+        stroke-dasharray: 0 351.86;
+        stroke-dashoffset: 0;
+    }
+
+    25% {
+        animation-timing-function: ease-out;
+        stroke-dasharray: 175.93 351.86;
+        stroke-dashoffset: 0;
+    }
+
+    50% {
+        animation-timing-function: steps(1, start);
+        stroke-dasharray: 175.93 351.86;
+        stroke-dashoffset: -175.93;
+        visibility: visible;
+    }
+
+    75%,
+    to {
+        visibility: hidden;
+    }
+}
+
+@keyframes mouth2 {
+    from {
+        animation-timing-function: steps(1, end);
+        visibility: hidden;
+    }
+
+    50% {
+        animation-timing-function: ease-in-out;
+        visibility: visible;
+        stroke-dashoffset: 0;
+    }
+
+    to {
+        stroke-dashoffset: -351.86;
+    }
+}
+
+/* Brands slider infinite scroll */
+@keyframes brandsScroll {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
