@@ -10,6 +10,10 @@
 
 - Resolved JSX entity escaping errors in `components/Manipulator/tools/BoxTypesList.jsx` and `components/Manipulator/tools/FeatureProductList.jsx`.
 - Added `eslint: { ignoreDuringBuilds: true }` to `next.config.mjs` to ensure CI builds succeed smoothly on Vercel without halting on legacy third-party hook warnings.
+- Fixed side-navigation and color glitching across all 17 box models:
+  - In `Scene.jsx`, replaced violent model-flipping `<a.group rotation>` with stable `cameraControls.setLookAt(...)` navigation. When a face/side (Front, Back, Top, Bottom, Left, Right) is selected, the camera smoothly glides around the stationary box, keeping all 17 models grounded on the floor without clipping.
+  - In `UniversalDieNetContainer.jsx`, resolved accidental color application on click: clicking a panel now strictly selects the panel and navigates the 3D camera without overwriting its color. Added explicit packaging color swatches (`Kraft, White, Black, Terracotta, Forest, Navy, Red, Amber`) and custom hex picker so panels are only painted when the user chooses a swatch.
+  - Cleaned 3D texture export in `convertSvgToJpg`: hides blueprint dimension text and dashed guide lines before rasterizing so 3D boxes never receive distorted technical drawings.
 - Modernized 3D customizer (`/customTool`) with Packlane-style packaging workshop UI:
   - Top header bar with active box pill, 3-step workflow stepper (`1. Size & Material` → `2. Design & Artwork` → `3. Quantity & Pricing`), and quick step transitions.
   - Sleek vertical tool dock (`SideBar3D.jsx`) with tactile espresso/kraft design tokens.
