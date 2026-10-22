@@ -17,6 +17,8 @@ export function KraftPaperBag(props) {
     extTexImgBlob,
     activeItem,
     selectedFeatureProduct,
+    extTexColor,
+    sideColors,
   } = useAppContext();
 
   const group = useRef();
@@ -88,11 +90,11 @@ export function KraftPaperBag(props) {
     ? '/whiteCoatTexture.jpg'
     : material === 'Dreamcoat'
     ? '/dreamCoatTexture.jpg'
-    : DEFAULT_EXT_TEX;
+    : '/whiteCoatTexture.jpg';
 
   const extTexMapUrl = isFeatureShowcase
     ? (generatedFeatureTexUrl || defaultExtTex)
-    : (extTexImgBlob || defaultExtTex);
+    : defaultExtTex;
 
   const extTex = useTexture({ map: extTexMapUrl });
 
@@ -115,6 +117,9 @@ export function KraftPaperBag(props) {
     currentScale.z = THREE.MathUtils.lerp(currentScale.z, targetScale[2] * (isOpen ? 1.0 : 0.4), delta * 6);
   });
 
+  const defaultBaseColor = material === 'White' ? '#FFFFFF' : (material === 'Dreamcoat' ? '#FAF5EE' : '#C7A882');
+  const bagColorHex = isFeatureShowcase ? '#FFFFFF' : (extTexColor || sideColors?.front || sideColors?.top || defaultBaseColor);
+
   return (
     <group
       ref={group}
@@ -132,6 +137,7 @@ export function KraftPaperBag(props) {
           >
             <meshStandardMaterial
               {...extTex}
+              color={bagColorHex}
               roughness={0.88}
               metalness={0.02}
               side={THREE.DoubleSide}

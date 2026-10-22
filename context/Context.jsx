@@ -59,178 +59,199 @@ export default function AppContextProvider({ children }) {
         depth: 4
     })
     const [extTexImg, setExtTexImg] = useState('MailerBoxOuterTex-Kraft.png')
-    const [extTexColor, setExtTexColor] = useState('#9f6e33')
-    const [selectedColor, setSelectedColor] = useState('#9f6e33')
+    const [extTexColor, setExtTexColor] = useState('#C7A882')
+    const [selectedColor, setSelectedColor] = useState('#C7A882')
     const [selectedSide, setSelectedSide] = useState('topFront')
     const [extTexImgBlob, setExtTexImgBlob] = useState(null)
     const [viewType, setViewType] = useState(null)
     const [selectedFeatureProduct, setSelectedFeatureProduct] = useState(null)
 
     const [sideColors, setSideColors] = useState({
-        lidFront: '',
-        top: '',
-        back: '',
-        bottom: '',
-        front: '',
-        left: '',
-        right: ''
+        lidFront: '#C7A882',
+        top: '#C7A882',
+        back: '#C7A882',
+        bottom: '#C7A882',
+        front: '#C7A882',
+        left: '#C7A882',
+        right: '#C7A882',
+        lidTop: '#C7A882',
+        lidRight: '#C7A882',
+        lidLeft: '#C7A882',
+        bottomFront: '#C7A882',
+        bottomBack: '#C7A882',
+        bottomLeft: '#C7A882',
+        bottomRight: '#C7A882'
     })
    
     useEffect(() => {
         if ( box === "mailerbox" ){
             if (material === 'Kraft') {
-                setExtTexColor('#9f6e33')
+                setExtTexColor('#C7A882')
                 setExtTexImg('MailerBoxOuterTex-Kraft.png')
                 setSideColors({
-                    lidFront: '#8d5c1c',
-                    top: '#8d5c1c',
-                    back: '#8d5c1c',
-                    bottom: '#8d5c1c',
-                    front: '#8d5c1c',
-                    left: '#8d5c1c',
-                    right: '#8d5c1c'
+                    lidFront: '#C7A882',
+                    top: '#C7A882',
+                    back: '#C7A882',
+                    bottom: '#C7A882',
+                    front: '#C7A882',
+                    left: '#C7A882',
+                    right: '#C7A882'
                 })
             } else if (material === 'Dreamcoat') {
-                setExtTexColor('#c8b084')
+                setExtTexColor('#FAF5EE')
                 setExtTexImg('MailerBoxOuterTex-Dreamcoat.png')
                 setSideColors({
-                    lidFront: '#cfb994',
-                    top: '#cfb994',
-                    back: '#cfb994',
-                    bottom: '#cfb994',
-                    front: '#cfb994',
-                    left: '#cfb994',
-                    right: '#cfb994'
+                    lidFront: '#FAF5EE',
+                    top: '#FAF5EE',
+                    back: '#FAF5EE',
+                    bottom: '#FAF5EE',
+                    front: '#FAF5EE',
+                    left: '#FAF5EE',
+                    right: '#FAF5EE'
                 })
             } else if (material === 'White') {
-                setExtTexColor('#e8e8e8')
+                setExtTexColor('#FFFFFF')
                 setExtTexImg('MailerBoxOuterTex-White.png')
                 setSideColors({
-                    lidFront: '#d3d2d2',
-                    top: '#d3d2d2',
-                    back: '#d3d2d2',
-                    bottom: '#d3d2d2',
-                    front: '#d3d2d2',
-                    left: '#d3d2d2',
-                    right: '#d3d2d2'
+                    lidFront: '#FFFFFF',
+                    top: '#FFFFFF',
+                    back: '#FFFFFF',
+                    bottom: '#FFFFFF',
+                    front: '#FFFFFF',
+                    left: '#FFFFFF',
+                    right: '#FFFFFF'
                 })
             }
         }
         else if (box==="pizzaBox") {
             if (material === 'Kraft') {
-                setExtTexColor('#9f6e33')
+                setExtTexColor('#C7A882')
                 setExtTexImg('pizzaBoxExtTex-kraft.png')
                 setSideColors({
-                    bottom: '#8d5c1c',
-                    bottomRight: '#8d5c1c',
-                    bottomLeft: '#8d5c1c',
-                    bottomFront: '#8d5c1c',
-                    bottomBack: '#8d5c1c',
-                    lidTop: '#8d5c1c',
-                    lidRight: '#8d5c1c',
-                    lidLeft: '#8d5c1c',
-                    lidFront: '#8d5c1c'
+                    bottom: '#C7A882',
+                    bottomRight: '#C7A882',
+                    bottomLeft: '#C7A882',
+                    bottomFront: '#C7A882',
+                    bottomBack: '#C7A882',
+                    lidTop: '#C7A882',
+                    lidRight: '#C7A882',
+                    lidLeft: '#C7A882',
+                    lidFront: '#C7A882',
+                    top: '#C7A882',
+                    front: '#C7A882'
                 })
             } else if (material === 'Dreamcoat') {
-                setExtTexColor('#c8b084')
+                setExtTexColor('#FAF5EE')
                 setExtTexImg('pizzaBoxExtTex-dreamcoat.png')
                 setSideColors({
-                    
-                    bottom: '#cfb994',
-                    bottomRight: '#cfb994',
-                    bottomLeft: '#cfb994',
-                    bottomFront: '#cfb994',
-                    bottomBack: '#cfb994',
-                    lidTop: '#cfb994',
-                    lidRight: '#cfb994',
-                    lidLeft: '#cfb994',
-                    lidFront: '#cfb994'
+                    bottom: '#FAF5EE',
+                    bottomRight: '#FAF5EE',
+                    bottomLeft: '#FAF5EE',
+                    bottomFront: '#FAF5EE',
+                    bottomBack: '#FAF5EE',
+                    lidTop: '#FAF5EE',
+                    lidRight: '#FAF5EE',
+                    lidLeft: '#FAF5EE',
+                    lidFront: '#FAF5EE',
+                    top: '#FAF5EE',
+                    front: '#FAF5EE'
                 })
             } else if (material === 'White') {
-                setExtTexColor('#e8e8e8')
+                setExtTexColor('#FFFFFF')
                 setExtTexImg('pizzaBoxExtTex-white.png')
                 setSideColors({
-                    
-                    bottom: '#d3d2d2',
-                    bottomRight: '#d3d2d2',
-                    bottomLeft: '#d3d2d2',
-                    bottomFront: '#d3d2d2',
-                    bottomBack: '#d3d2d2',
-                    lidTop: '#d3d2d2',
-                    lidRight: '#d3d2d2',
-                    lidLeft: '#d3d2d2',
-                    lidFront: '#d3d2d2'
+                    bottom: '#FFFFFF',
+                    bottomRight: '#FFFFFF',
+                    bottomLeft: '#FFFFFF',
+                    bottomFront: '#FFFFFF',
+                    bottomBack: '#FFFFFF',
+                    lidTop: '#FFFFFF',
+                    lidRight: '#FFFFFF',
+                    lidLeft: '#FFFFFF',
+                    lidFront: '#FFFFFF',
+                    top: '#FFFFFF',
+                    front: '#FFFFFF'
                 })
             }
         }
         else if (box==="shippingBox") {
             if (material === 'Kraft') {
-                setExtTexColor('#9f6e33')
+                setExtTexColor('#C7A882')
                 setExtTexImg('SBD.png')
                 setSideColors({
-                    front: '#8d5c1c',
-                    left: '#8d5c1c',
-                    right: '#8d5c1c',
-                    back: '#8d5c1c',
-                    bottom: '#8d5c1c',
-                    
+                    front: '#C7A882',
+                    left: '#C7A882',
+                    right: '#C7A882',
+                    back: '#C7A882',
+                    bottom: '#C7A882',
+                    top: '#C7A882',
+                    lidFront: '#C7A882'
                 })
             } else if (material === 'Dreamcoat') {
-                setExtTexColor('#c8b084')
+                setExtTexColor('#FAF5EE')
                 setExtTexImg('ShippingBoxDreamcoatOuterTexture.png')
                 setSideColors({
-                    
-                    front: '#cfb994',
-                    left: '#cfb994',
-                    right: '#cfb994',
-                    back: '#cfb994',
-                    bottom: '#cfb994',
-                    
+                    front: '#FAF5EE',
+                    left: '#FAF5EE',
+                    right: '#FAF5EE',
+                    back: '#FAF5EE',
+                    bottom: '#FAF5EE',
+                    top: '#FAF5EE',
+                    lidFront: '#FAF5EE'
                 })
             } else if (material === 'White') {
-                setExtTexColor('#e8e8e8')
+                setExtTexColor('#FFFFFF')
                 setExtTexImg('ShippingBoxWhiteOuterTexture.png')
                 setSideColors({
-                    
-                    front: '#d3d2d2',
-                    left: '#d3d2d2',
-                    right: '#d3d2d2',
-                    back: '#d3d2d2',
-                    bottom: '#d3d2d2',
-                    
+                    front: '#FFFFFF',
+                    left: '#FFFFFF',
+                    right: '#FFFFFF',
+                    back: '#FFFFFF',
+                    bottom: '#FFFFFF',
+                    top: '#FFFFFF',
+                    lidFront: '#FFFFFF'
                 })
             }
         }
         else {
             if (material === 'Kraft') {
-                setExtTexColor('#9f6e33');
+                setExtTexColor('#C7A882');
                 setExtTexImg('kraftTexture.jpg');
                 setSideColors({
-                    front: '#8d5c1c',
-                    left: '#8d5c1c',
-                    right: '#8d5c1c',
-                    back: '#8d5c1c',
-                    bottom: '#8d5c1c',
+                    front: '#C7A882',
+                    left: '#C7A882',
+                    right: '#C7A882',
+                    back: '#C7A882',
+                    bottom: '#C7A882',
+                    top: '#C7A882',
+                    lidFront: '#C7A882',
+                    lid: '#C7A882'
                 });
             } else if (material === 'Dreamcoat') {
-                setExtTexColor('#c8b084');
+                setExtTexColor('#FAF5EE');
                 setExtTexImg('dreamCoatTexture.jpg');
                 setSideColors({
-                    front: '#cfb994',
-                    left: '#cfb994',
-                    right: '#cfb994',
-                    back: '#cfb994',
-                    bottom: '#cfb994',
+                    front: '#FAF5EE',
+                    left: '#FAF5EE',
+                    right: '#FAF5EE',
+                    back: '#FAF5EE',
+                    bottom: '#FAF5EE',
+                    top: '#FAF5EE',
+                    lidFront: '#FAF5EE',
+                    lid: '#FAF5EE'
                 });
             } else if (material === 'White') {
-                setExtTexColor('#e8e8e8');
+                setExtTexColor('#FFFFFF');
                 setExtTexImg('whiteCoatTexture.jpg');
                 setSideColors({
-                    front: '#d3d2d2',
-                    left: '#d3d2d2',
-                    right: '#d3d2d2',
-                    back: '#d3d2d2',
-                    bottom: '#d3d2d2',
+                    front: '#FFFFFF',
+                    left: '#FFFFFF',
+                    right: '#FFFFFF',
+                    back: '#FFFFFF',
+                    bottom: '#FFFFFF',
+                    top: '#FFFFFF',
+                    lidFront: '#FFFFFF',
+                    lid: '#FFFFFF'
                 });
             }
         }

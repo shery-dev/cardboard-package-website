@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas } from '@react-three/fiber'
-import { ContactShadows, Environment, OrbitControls, CameraControls, useProgress, Html } from '@react-three/drei'
+import { ContactShadows, Environment, CameraControls, useProgress, Html } from '@react-three/drei'
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { MailerBox } from './Boxes/MailerBox'
 import { PizzaBox } from './Boxes/PizzaBox'
@@ -59,13 +59,13 @@ const Scene = () => {
         } else if (side.includes('back') || side === 'topback' || side === 'backwall') {
             cameraControls.setLookAt(0, -1, -13, 0, -1, 0, true);
         } else if (side === 'top' || side.includes('lid') || side === 'cover') {
-            cameraControls.setLookAt(0, 14, 0.001, 0, -1, 0, true);
+            cameraControls.setLookAt(0, 13, 2.5, 0, -1, 0, true);
         } else if (side === 'bottom' || side === 'base' || side === 'tray') {
-            cameraControls.setLookAt(0, -11, 4, 0, -2, 0, true);
+            cameraControls.setLookAt(0, -9, 3.5, 0, -2, 0, true);
         } else if (side.includes('left')) {
-            cameraControls.setLookAt(-14, -1, 0, 0, -1, 0, true);
+            cameraControls.setLookAt(-13, -1, 0, 0, -1, 0, true);
         } else if (side.includes('right')) {
-            cameraControls.setLookAt(14, -1, 0, 0, -1, 0, true);
+            cameraControls.setLookAt(13, -1, 0, 0, -1, 0, true);
         }
     }, [selectedSide]);
 
@@ -172,7 +172,6 @@ const Scene = () => {
                                     <MailerBox />
                                 )}
                             </group>
-                            <OrbitControls />
                         </Suspense>
                     </Canvas>
                 </WebGLErrorBoundary>

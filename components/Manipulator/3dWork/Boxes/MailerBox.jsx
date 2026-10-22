@@ -26,6 +26,8 @@ export function MailerBox(props) {
     extTexImgBlob,
     activeItem,
     selectedFeatureProduct,
+    extTexColor,
+    sideColors,
   } = useAppContext();
 
   const group = useRef();
@@ -82,13 +84,19 @@ export function MailerBox(props) {
     };
   }, []);
 
-  const defaultExtTex = extTexImg
-    ? (extTexImg.startsWith('/') ? extTexImg : `/uploads/${extTexImg}`)
-    : DEFAULT_EXT_TEX;
+  const defaultBaseColor = material === 'White' ? '#FFFFFF' : (material === 'Dreamcoat' ? '#FAF5EE' : '#C7A882');
+  const appliedColorHex = isFeatureShowcase ? '#FFFFFF' : (extTexColor || sideColors?.top || sideColors?.front || defaultBaseColor);
+  const hasCustomColor = !isFeatureShowcase && appliedColorHex && appliedColorHex.toUpperCase() !== '#C7A882';
+
+  const defaultExtTex = material === 'White'
+    ? '/whiteCoatTexture.jpg'
+    : (extTexImg
+      ? (extTexImg.startsWith('/') ? extTexImg : `/uploads/${extTexImg}`)
+      : DEFAULT_EXT_TEX);
 
   const extTexMapUrl = isFeatureShowcase
     ? (generatedFeatureTexUrl || DEFAULT_EXT_TEX)
-    : (extTexImgBlob || defaultExtTex || DEFAULT_EXT_TEX);
+    : (hasCustomColor ? '/whiteCoatTexture.jpg' : (extTexImgBlob || defaultExtTex || DEFAULT_EXT_TEX));
 
   const extTex = useTexture({ map: extTexMapUrl });
 
@@ -177,7 +185,14 @@ export function MailerBox(props) {
             </mesh>
             <mesh>
               <skinnedMesh name="Plane" geometry={nodes.Plane.geometry} skeleton={nodes.Plane.skeleton}>
-                <meshStandardMaterial {...extTex} side={THREE.BackSide} map-flipY={false} />
+                <meshStandardMaterial
+                  {...extTex}
+                  color={new THREE.Color(appliedColorHex)}
+                  roughness={0.85}
+                  metalness={0.02}
+                  side={THREE.BackSide}
+                  map-flipY={false}
+                />
               </skinnedMesh>
             </mesh>
           </mesh>

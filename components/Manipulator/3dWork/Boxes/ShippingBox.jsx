@@ -18,6 +18,8 @@ export function ShippingBox(props) {
     extTexImgBlob,
     activeItem,
     selectedFeatureProduct,
+    extTexColor,
+    sideColors,
   } = useAppContext();
 
   const group = useRef();
@@ -101,10 +103,17 @@ export function ShippingBox(props) {
     };
   }, []);
 
-  const defaultExtTex = extTexImg ? `/uploads/${extTexImg}` : DEFAULT_EXT_TEX;
+  const defaultBaseColor = material === 'White' ? '#FFFFFF' : (material === 'Dreamcoat' ? '#FAF5EE' : '#C7A882');
+  const appliedColorHex = isFeatureShowcase ? '#FFFFFF' : (extTexColor || sideColors?.front || sideColors?.top || defaultBaseColor);
+  const hasCustomColor = !isFeatureShowcase && appliedColorHex && appliedColorHex.toUpperCase() !== '#C7A882';
+
+  const defaultExtTex = material === 'White'
+    ? '/whiteCoatTexture.jpg'
+    : (extTexImg ? `/uploads/${extTexImg}` : DEFAULT_EXT_TEX);
+
   const extTexMapUrl = isFeatureShowcase
     ? (generatedFeatureTexUrl || defaultExtTex)
-    : (extTexImgBlob || defaultExtTex);
+    : (hasCustomColor ? '/whiteCoatTexture.jpg' : (extTexImgBlob || defaultExtTex));
 
   const extTex = useTexture({ map: extTexMapUrl });
 
@@ -205,7 +214,14 @@ export function ShippingBox(props) {
                 geometry={nodes.PlaneWOA.geometry}
                 skeleton={nodes.PlaneWOA.skeleton}
               >
-                <meshStandardMaterial {...extTex} side={THREE.FrontSide} map-flipY={false} />
+                <meshStandardMaterial
+                  {...extTex}
+                  color={new THREE.Color(appliedColorHex)}
+                  roughness={0.85}
+                  metalness={0.02}
+                  side={THREE.FrontSide}
+                  map-flipY={false}
+                />
               </skinnedMesh>
             </mesh>
           </mesh>

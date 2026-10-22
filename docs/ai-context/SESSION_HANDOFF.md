@@ -3,8 +3,22 @@
 ## Latest session
 
 **Date:** 2026-10-22  
-**Scope:** Production build verification, git initialization, security hygiene, and pushing private GitHub repository for Vercel deployment.  
-**Implementation status:** Production build verified (`57/57` pages generated cleanly). Private GitHub repository created and pushed to `https://github.com/shery-dev/cardboard-package-website`. Sensitive data (`.env*.local`, `data/cardboard.db*`, `admin-credentials.json`) verified 100% excluded.
+**Scope:** Fix 3D box side-focus camera navigation and material color pipeline across all 17 box models.  
+**Implementation status:** Fully verified. Production build (`npm run build`) generates 57/57 routes with 0 errors. Local dev server running smoothly on port 3000.
+
+## Completed
+
+- **Fixed 3D Camera Glitching & Conflict:**
+  - Removed duplicate `<OrbitControls />` in `components/Manipulator/3dWork/Scene.jsx` that was fighting `<CameraControls />` on every frame.
+  - Eliminated Gimbal Lock on top view (`(0, 14, 0.001)` -> `(0, 13, 2.5)`) and bottom view (`(0, -9, 3.5)`).
+  - Clicking any 2D net face (Front, Back, Top, Bottom, Left, Right) smoothly glides the camera to focus squarely on that side with zero viewport shaking or model flipping.
+- **Fixed Color Corruption Across All 17 Box Styles:**
+  - Replaced legacy muddy default colors (`#9f6e33` / `#8d5c1c`) in `context/Context.jsx` with authentic packaging tones: Warm Kraft (`#C7A882`), Coated Ivory (`#FAF5EE`), and Pure White (`#FFFFFF`).
+  - Switched Three.js material color multiplier map to neutral paper texture (`/whiteCoatTexture.jpg`) when custom colors are chosen, allowing Red, Blue, Forest Green, Black, Terracotta, White, and Kraft to render with pure color fidelity and realistic cardboard grain instead of multiplying over brown pixels.
+  - Prevented 2D flat cross SVG rasterization (`extTexImgBlob`) from smearing onto 3D parametric GLTF models (`DynamicBoxModel`, `CakeBox`, `PizzaSliceBox`, `KraftPaperBag`) which have 3D box UV shells.
+  - Connected `color={new THREE.Color(appliedColorHex)}` across `ShippingBox.jsx`, `MailerBox.jsx`, `PizzaBox.jsx`, `CakeBox.jsx`, `PizzaSliceBox.jsx`, `KraftPaperBag.jsx`, and `DynamicBoxModel.jsx` (which powers all 11 GLTF boxes: Ration, Tool, Gift, Ecommerce, Laptop, Flat Folder, Food Combo, Food Platter, Apparel, Cube, Corporate).
+  - Preserved specialized non-cardboard 3D accessories (`ReinforcedTape`, `HandHole_*`, `CornerBracket_*`, `AdhesiveTapeStrip`, `ZipperRipcord`, `LaptopCradle`, `CableDivider`, `ViewingWindow`, `MagneticCatch`, rope handles).
+  - Added "Apply to All" button in `UniversalDieNetContainer.jsx` to paint the entire box or individual panels with a single click.
 
 ## Completed
 

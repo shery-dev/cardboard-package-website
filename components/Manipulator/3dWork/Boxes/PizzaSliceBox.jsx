@@ -17,6 +17,8 @@ export function PizzaSliceBox(props) {
     extTexImgBlob,
     activeItem,
     selectedFeatureProduct,
+    extTexColor,
+    sideColors,
   } = useAppContext();
 
   const group = useRef();
@@ -88,11 +90,11 @@ export function PizzaSliceBox(props) {
     ? '/whiteCoatTexture.jpg'
     : material === 'Dreamcoat'
     ? '/dreamCoatTexture.jpg'
-    : DEFAULT_EXT_TEX;
+    : '/whiteCoatTexture.jpg';
 
   const extTexMapUrl = isFeatureShowcase
     ? (generatedFeatureTexUrl || defaultExtTex)
-    : (extTexImgBlob || defaultExtTex);
+    : defaultExtTex;
 
   const extTex = useTexture({ map: extTexMapUrl });
 
@@ -127,6 +129,13 @@ export function PizzaSliceBox(props) {
     }
   });
 
+  const lidColor = sideColors?.top || sideColors?.lidFront || extTexColor;
+  const bodyColor = sideColors?.front || sideColors?.bottom || extTexColor;
+  const defaultBaseColor = material === 'White' ? '#FFFFFF' : (material === 'Dreamcoat' ? '#FAF5EE' : '#C7A882');
+
+  const lidColorHex = isFeatureShowcase ? '#FFFFFF' : (lidColor || defaultBaseColor);
+  const bodyColorHex = isFeatureShowcase ? '#FFFFFF' : (bodyColor || defaultBaseColor);
+
   return (
     <group
       ref={group}
@@ -144,6 +153,7 @@ export function PizzaSliceBox(props) {
           >
             <meshStandardMaterial
               {...extTex}
+              color={bodyColorHex}
               roughness={0.85}
               metalness={0.02}
               side={THREE.DoubleSide}
@@ -163,6 +173,7 @@ export function PizzaSliceBox(props) {
             >
               <meshStandardMaterial
                 {...extTex}
+                color={lidColorHex}
                 roughness={0.85}
                 metalness={0.02}
                 side={THREE.DoubleSide}

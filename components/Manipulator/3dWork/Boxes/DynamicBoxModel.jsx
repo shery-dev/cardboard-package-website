@@ -30,6 +30,8 @@ export function DynamicBoxModel({
     extTexImgBlob,
     activeItem,
     selectedFeatureProduct,
+    extTexColor,
+    sideColors,
   } = useAppContext();
 
   const group = useRef();
@@ -93,11 +95,12 @@ export function DynamicBoxModel({
     ? '/whiteCoatTexture.jpg'
     : material === 'Dreamcoat'
     ? '/dreamCoatTexture.jpg'
-    : DEFAULT_EXT_TEX;
+    : '/whiteCoatTexture.jpg';
 
+  // For 3D GLTF models, use clean paper texture grain (do not map flat 2D die net cross SVG onto 3D GLB UVs)
   const extTexMapUrl = isFeatureShowcase
     ? (generatedFeatureTexUrl || defaultExtTex)
-    : (extTexImgBlob || defaultExtTex);
+    : defaultExtTex;
 
   const extTex = useTexture({ map: extTexMapUrl });
   const { scene } = useGLTF(glbPath);
@@ -171,27 +174,50 @@ export function DynamicBoxModel({
     }
   });
 
-  // Apply active textures to meshes in the cloned scene
+  // Apply active textures and panel colors to meshes in the cloned scene
   React.useEffect(() => {
     clonedScene.traverse((child) => {
       if (child.isMesh) {
-        // Skip specialized metallic/rubber accents like corner brackets, tape, or handles
-        if (child.name.includes('CornerBracket') || child.name.includes('AdhesiveTape') || child.name.includes('Zipper') || child.name.includes('Magnetic') || child.name.includes('SteamVent') || child.name.includes('HandHole')) {
+        // Skip specialized metallic/rubber accents like corner brackets, tape, windows, or handles
+        if (
+          child.name.includes('CornerBracket') ||
+          child.name.includes('AdhesiveTape') ||
+          child.name.includes('Zipper') ||
+          child.name.includes('Magnetic') ||
+          child.name.includes('SteamVent') ||
+          child.name.includes('HandHole') ||
+          child.name.includes('ReinforcedTape') ||
+          child.name.includes('LaptopCradle') ||
+          child.name.includes('CableDivider') ||
+          child.name.includes('ViewingWindow')
+        ) {
           return;
         }
+
+        const isLid = child.name.toLowerCase().includes('lid') || (lidGroupName && child.name.includes(lidGroupName));
+        const lidColor = sideColors?.top || sideColors?.lidFront || sideColors?.lid || extTexColor;
+        const bodyColor = sideColors?.front || sideColors?.bottom || sideColors?.back || sideColors?.left || sideColors?.right || extTexColor;
+        const defaultBaseColor = material === 'White' ? '#FFFFFF' : (material === 'Dreamcoat' ? '#FAF5EE' : '#C7A882');
+
+        const appliedColorHex = isFeatureShowcase
+          ? '#FFFFFF'
+          : (isLid ? (lidColor || defaultBaseColor) : (bodyColor || defaultBaseColor));
+
         child.material = new THREE.MeshStandardMaterial({
           map: extTex.map,
+          color: new THREE.Color(appliedColorHex),
           roughness: 0.85,
           metalness: 0.02,
           side: THREE.DoubleSide,
         });
+
         if (child.material.map) {
           child.material.map.flipY = false;
           child.material.needsUpdate = true;
         }
       }
     });
-  }, [clonedScene, extTex.map, material]);
+  }, [clonedScene, extTex.map, material, extTexColor, sideColors, isFeatureShowcase, lidGroupName]);
 
   return (
     <group

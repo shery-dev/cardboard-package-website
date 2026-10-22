@@ -10,7 +10,7 @@ import { createFeatureBoxTexture } from '@/lib/featureBoxTexture';
 const DEFAULT_EXT_TEX = '/uploads/pizzaBoxExtTex-kraft.png';
 
 export function PizzaBox(props) {
-  const { isOpen, material, selectedSize, extTexImg, extTexImgBlob, activeItem, selectedFeatureProduct } = useAppContext();
+  const { isOpen, material, selectedSize, extTexImg, extTexImgBlob, activeItem, selectedFeatureProduct, extTexColor, sideColors } = useAppContext();
 
   const group = useRef();
   const generatedBlobRef = useRef(null);
@@ -71,13 +71,20 @@ export function PizzaBox(props) {
     };
   }, []);
 
-  const defaultExtTex = extTexImg
-    ? (extTexImg.startsWith('/') ? extTexImg : `/uploads/${extTexImg}`)
-    : '/pizzaBoxExtTex-kraft.png';
+  const defaultBaseColor = material === 'White' ? '#FFFFFF' : (material === 'Dreamcoat' ? '#FAF5EE' : '#C7A882');
+  const appliedColorHex = isFeatureShowcase ? '#FFFFFF' : (extTexColor || sideColors?.top || sideColors?.front || defaultBaseColor);
+
+  const defaultExtTex = material === 'White'
+    ? '/whiteCoatTexture.jpg'
+    : (extTexImg
+      ? (extTexImg.startsWith('/') ? extTexImg : `/uploads/${extTexImg}`)
+      : '/pizzaBoxExtTex-kraft.png');
+
+  const hasCustomColor = !isFeatureShowcase && appliedColorHex && appliedColorHex.toUpperCase() !== '#C7A882';
 
   const extTexMapUrl = isFeatureShowcase
     ? (generatedFeatureTexUrl || defaultExtTex)
-    : (extTexImgBlob || defaultExtTex || '/pizzaBoxExtTex-kraft.png');
+    : (hasCustomColor ? '/whiteCoatTexture.jpg' : (extTexImgBlob || defaultExtTex || '/pizzaBoxExtTex-kraft.png'));
 
   const extTex = useTexture({ map: extTexMapUrl });
 
@@ -108,6 +115,8 @@ export function PizzaBox(props) {
   // Apply exterior and interior textures to the pizza box skinned meshes
   useEffect(() => {
     if (!scene) return;
+    const appliedColor = appliedColorHex || defaultBaseColor;
+
     scene.traverse((child) => {
       if (child.isSkinnedMesh || child.isMesh) {
         const matName = child.material?.name || '';
@@ -116,6 +125,7 @@ export function PizzaBox(props) {
 
         child.material = new THREE.MeshStandardMaterial({
           map: activeTexture,
+          color: isExterior ? new THREE.Color(appliedColor) : new THREE.Color(0xffffff),
           roughness: isExterior ? 0.85 : 0.9,
           metalness: 0.02,
           side: THREE.DoubleSide,
@@ -127,7 +137,7 @@ export function PizzaBox(props) {
         }
       }
     });
-  }, [scene, extTex.map, intTex.map]);
+  }, [scene, extTex.map, intTex.map, material, extTexColor, sideColors, isFeatureShowcase]);
 
   const topBone = React.useMemo(() => {
     let found = null;

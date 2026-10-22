@@ -32,6 +32,7 @@ export default function UniversalDieNetContainer() {
 
   const {
     extTexColor,
+    setExtTexColor,
     sideColors,
     setSideColors,
     selectedColor,
@@ -107,14 +108,20 @@ export default function UniversalDieNetContainer() {
 
   const applyDesignTo3D = () => {
     setApplied(true);
-    convertSvgToJpg();
+    // Only rasterize 2D SVG canvas into 3D image blob if user has uploaded custom artwork
+    if (Object.keys(images).length > 0) {
+      convertSvgToJpg();
+    }
     setTimeout(() => setApplied(false), 800);
   };
 
-  // Section click selects the face and tells 3D camera to focus on that face WITHOUT changing colors
+  // Section click selects the face and tells 3D camera to focus smoothly on that face WITHOUT changing colors
   const handleSectionClick = (sideKey) => {
     setSelectedSection(sideKey);
-    if (setSelectedSide) setSelectedSide(sideKey);
+    if (setSelectedSide) {
+      setSelectedSide(null);
+      setTimeout(() => setSelectedSide(sideKey), 10);
+    }
   };
 
   // Explicit user color pick for the active panel
@@ -126,16 +133,47 @@ export default function UniversalDieNetContainer() {
         [selectedSection]: color,
       }));
     }
+    if (setSelectedColor) setSelectedColor(color);
+  };
+
+  // Apply color to all faces of the box at once
+  const handleApplyColorToAll = (color) => {
+    if (setExtTexColor) setExtTexColor(color);
+    if (setSelectedColor) setSelectedColor(color);
+    if (setSideColors) {
+      setSideColors((prev) => {
+        const next = { ...prev };
+        Object.keys(next).forEach((k) => {
+          next[k] = color;
+        });
+        next.top = color;
+        next.lidFront = color;
+        next.lid = color;
+        next.front = color;
+        next.back = color;
+        next.left = color;
+        next.right = color;
+        next.bottom = color;
+        next.lidTop = color;
+        next.lidRight = color;
+        next.lidLeft = color;
+        next.bottomFront = color;
+        next.bottomBack = color;
+        next.bottomLeft = color;
+        next.bottomRight = color;
+        return next;
+      });
+    }
   };
 
   const handleResetPanelColor = () => {
     if (!selectedSection) return;
+    const defaultColor = extTexColor || '#C7A882';
     if (setSideColors) {
-      setSideColors((prev) => {
-        const next = { ...prev };
-        delete next[selectedSection];
-        return next;
-      });
+      setSideColors((prev) => ({
+        ...prev,
+        [selectedSection]: defaultColor,
+      }));
     }
   };
 
@@ -348,13 +386,23 @@ export default function UniversalDieNetContainer() {
               </span>
             </div>
             {selectedSection && (
-              <button
-                type="button"
-                onClick={handleResetPanelColor}
-                className="text-[10px] text-[#A94F32] hover:underline font-semibold"
-              >
-                Reset Color
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleApplyColorToAll(sideColors[selectedSection] || '#C7A882')}
+                  className="text-[10px] text-[#15803D] hover:underline font-bold"
+                  title="Apply current color across the whole box"
+                >
+                  Apply to All
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResetPanelColor}
+                  className="text-[10px] text-[#A94F32] hover:underline font-semibold"
+                >
+                  Reset Color
+                </button>
+              </div>
             )}
             <button
               type="button"
@@ -398,6 +446,13 @@ export default function UniversalDieNetContainer() {
                   onChange={(e) => handleColorPick(e.target.value)}
                   className="w-6 h-6 p-0 border border-gray-300 rounded cursor-pointer bg-transparent"
                 />
+                <button
+                  type="button"
+                  onClick={() => handleApplyColorToAll(sideColors[selectedSection] || '#C7A882')}
+                  className="px-2 py-0.5 text-[10px] font-bold rounded bg-[#2B211B] text-[#FFFDFC] hover:bg-[#A94F32] transition-colors ml-1"
+                >
+                  All Panels
+                </button>
               </div>
             </div>
           )}
