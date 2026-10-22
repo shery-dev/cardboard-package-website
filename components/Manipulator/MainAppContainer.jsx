@@ -37,7 +37,23 @@ async function getSubProductData(id) {
 
 const MainAppContainer = ({ children }) => {
     const mainDivRef = useRef(null);
-    const { activeItem, setSelectedSize, setViewType, setMaterial, setSideColors, setImages, setImagePositions, setImageSizes, setImageRotations, setExtTexImg, selectBoxPreset } = useAppContext();
+    const {
+        activeItem,
+        setActiveItem,
+        setSelectedSize,
+        setViewType,
+        setMaterial,
+        setSideColors,
+        setImages,
+        setImagePositions,
+        setImageSizes,
+        setImageRotations,
+        setExtTexImg,
+        selectBoxPreset,
+        selectedSize,
+        material,
+        activeBoxPreset
+    } = useAppContext();
     const [data, setData] = useState('');
     const [subProdData, setSubProdData] = useState(null);
 
@@ -128,30 +144,131 @@ const MainAppContainer = ({ children }) => {
         };
     }, [id]);
 
+    // Determine Packlane-style Active Step
+    const currentStep =
+        activeItem === 'quantity' ? 3 :
+        (activeItem === 'design' || activeItem === 'featureproduct' || activeItem === 'feature-products') ? 2 : 1;
+
     return (
-        <>
-            <div
-                ref={mainDivRef}
-                className="grid grid-cols-12 grid-rows-1 gap-1.5 h-full min-h-0 overflow-hidden py-1"
-            >
-                <div className="h-full min-h-0 rounded-l-xl overflow-hidden bg-gray-100 shadow-sm">
+        <div ref={mainDivRef} className="w-full h-full flex flex-col overflow-hidden bg-[#FAF7F2]">
+            {/* Packlane-Style Top Header Bar */}
+            <header className="w-full shrink-0 h-13 px-4 bg-white border-b border-[#DCCFC2] flex items-center justify-between shadow-2xs z-20">
+                {/* Left: Active Box Model & Dimensions Pill */}
+                <div className="flex items-center gap-2.5">
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-sm font-bold text-[#2B211B] leading-none">
+                                {activeBoxPreset?.name || 'Standard Mailer Box'}
+                            </h1>
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#A94F32] bg-[#A94F32]/10 px-1.5 py-0.5 rounded">
+                                {activeBoxPreset?.category || 'Custom Box'}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1 text-[11px] text-[#6B584D]">
+                            <span className="font-semibold text-[#2B211B]">
+                                {selectedSize ? `${selectedSize.length}″ × ${selectedSize.width}″ × ${selectedSize.depth}″` : '10″ × 10″ × 4″'}
+                            </span>
+                            <span>•</span>
+                            <span className="capitalize">{material || 'Kraft'}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Center: 3-Step Packlane Workflow Stepper */}
+                <nav aria-label="Customizer Steps" className="hidden md:flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setActiveItem('size')}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                            currentStep === 1
+                                ? "bg-[#2B211B] text-[#FFFDFC] shadow-xs"
+                                : "text-[#6B584D] hover:bg-[#F2ECE4] hover:text-[#2B211B]"
+                        }`}
+                    >
+                        <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${currentStep === 1 ? "bg-[#C7A882] text-[#2B211B]" : "bg-[#DCCFC2] text-[#6B584D]"}`}>1</span>
+                        <span>Size & Material</span>
+                    </button>
+
+                    <div className="w-4 h-[1px] bg-[#DCCFC2]" />
+
+                    <button
+                        type="button"
+                        onClick={() => setActiveItem('design')}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                            currentStep === 2
+                                ? "bg-[#2B211B] text-[#FFFDFC] shadow-xs"
+                                : "text-[#6B584D] hover:bg-[#F2ECE4] hover:text-[#2B211B]"
+                        }`}
+                    >
+                        <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${currentStep === 2 ? "bg-[#C7A882] text-[#2B211B]" : "bg-[#DCCFC2] text-[#6B584D]"}`}>2</span>
+                        <span>Design & Artwork</span>
+                    </button>
+
+                    <div className="w-4 h-[1px] bg-[#DCCFC2]" />
+
+                    <button
+                        type="button"
+                        onClick={() => setActiveItem('quantity')}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                            currentStep === 3
+                                ? "bg-[#2B211B] text-[#FFFDFC] shadow-xs"
+                                : "text-[#6B584D] hover:bg-[#F2ECE4] hover:text-[#2B211B]"
+                        }`}
+                    >
+                        <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${currentStep === 3 ? "bg-[#C7A882] text-[#2B211B]" : "bg-[#DCCFC2] text-[#6B584D]"}`}>3</span>
+                        <span>Quantity & Pricing</span>
+                    </button>
+                </nav>
+
+                {/* Right: Quick Navigation Step Buttons */}
+                <div className="flex items-center gap-2">
+                    {currentStep < 3 ? (
+                        <button
+                            type="button"
+                            onClick={() => setActiveItem(currentStep === 1 ? 'design' : 'quantity')}
+                            className="bg-[#2B211B] hover:bg-[#A94F32] text-[#FFFDFC] px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-xs"
+                        >
+                            Next Step →
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={() => setActiveItem('size')}
+                            className="text-[#6B584D] hover:text-[#2B211B] text-xs font-bold px-2 py-1"
+                        >
+                            ← Back to Sizing
+                        </button>
+                    )}
+                </div>
+            </header>
+
+            {/* Packlane Workspace: Left Dock, Active Tool Drawer, Center 3D Canvas, Right Summary */}
+            <div className="w-full flex-1 min-h-0 flex overflow-hidden p-2 gap-2">
+                {/* Left Tool Rail (64px) */}
+                <div className="w-16 shrink-0 h-full rounded-xl overflow-hidden shadow-xs">
                     <SideBar3D />
                 </div>
-                <div
-                    className={`w-full col-span-2 px-1.5 pt-1 bg-gray-100 shadow-sm min-h-0 overflow-auto ${activeItem === 'design' ? 'min-w-[calc(23.333%+400px)] max-h-[calc(100%-180px)] pb-[180px]' : 'pb-[190px]'}`}
-                >
+
+                {/* Active Tool Options Drawer */}
+                <div className={`h-full shrink-0 overflow-y-auto bg-white rounded-xl border border-[#DCCFC2] p-2.5 shadow-xs transition-all duration-200 ${
+                    activeItem === 'design' ? 'w-[450px]' : 'w-[290px]'
+                }`}>
                     <ToolsOptionsContainer data={data} />
                 </div>
-                <div className="min-h-0 overflow-hidden col-span-6 col-start-4 row-start-1">
+
+                {/* Center 3D Studio Viewport */}
+                <div className="flex-1 min-w-0 h-full">
                     {children}
                 </div>
-                <div className="col-span-3 col-start-10 row-start-1 pt-1 pb-[180px] h-full min-h-0 flex flex-col">
+
+                {/* Right Order Summary & Pricing Sidebar */}
+                <div className="w-[280px] xl:w-[310px] shrink-0 h-full">
                     <ProductForm data={
                         id === 'main' ? data : (subProdData ? subProdData[0] : '')
                     } />
                 </div>
             </div>
-        </>
+        </div>
     );
 };
 

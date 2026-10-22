@@ -19,11 +19,25 @@ import WebGLErrorBoundary from '../assets/WebGLErrorBoundary';
 
 const Scene = () => {
 
-    const { isOpen, setIsOpen, selectedSide, box } = useAppContext()
+    const { isOpen, setIsOpen, selectedSide, box, activeItem, setActiveItem } = useAppContext()
     const cameraControlRef = useRef();
     const [canvasKey, setCanvasKey] = useState(0);
 
     const [spring, setSpring] = useSpring(() => ({ rotation: [0, 0, 0] }))
+
+    const setCameraView = (view) => {
+        const ctrl = cameraControlRef.current;
+        if (!ctrl) return;
+        if (view === 'iso') {
+            ctrl.setLookAt(9, 7, 10, 0, -1, 0, true);
+        } else if (view === 'front') {
+            ctrl.setLookAt(0, 0, 14, 0, -1, 0, true);
+        } else if (view === 'top') {
+            ctrl.setLookAt(0, 14, 0, 0, -1, 0, true);
+        } else if (view === 'side') {
+            ctrl.setLookAt(14, 0, 0, 0, -1, 0, true);
+        }
+    };
 
     function Loader() {
         return (
@@ -76,8 +90,46 @@ const Scene = () => {
     }, [selectedSide, setSpring]);
 
     return (
-        <>
-            <div className="w-full mt-2 shrink-0" style={{ height: '65vh' }}>
+        <div className="relative w-full h-full min-h-[500px] flex flex-col rounded-xl overflow-hidden border border-[#DCCFC2] bg-gradient-to-b from-[#FAF7F2] via-[#F4EFEA] to-[#EAE3D9] shadow-xs">
+            {/* Top Viewport Floating Bar: Camera View Presets */}
+            <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-white/90 backdrop-blur-md px-2 py-1 rounded-lg border border-[#DCCFC2] shadow-xs text-xs font-semibold text-[#2B211B]">
+                <span className="text-[10px] uppercase tracking-wider text-[#6B584D] px-1 font-bold">View:</span>
+                <button
+                    type="button"
+                    onClick={() => setCameraView('iso')}
+                    className="px-2 py-1 rounded hover:bg-[#F7F3ED] transition-colors text-[11px]"
+                    title="Isometric 3D View"
+                >
+                    3D
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setCameraView('front')}
+                    className="px-2 py-1 rounded hover:bg-[#F7F3ED] transition-colors text-[11px]"
+                    title="Front View"
+                >
+                    Front
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setCameraView('top')}
+                    className="px-2 py-1 rounded hover:bg-[#F7F3ED] transition-colors text-[11px]"
+                    title="Top View"
+                >
+                    Top
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setCameraView('side')}
+                    className="px-2 py-1 rounded hover:bg-[#F7F3ED] transition-colors text-[11px]"
+                    title="Side View"
+                >
+                    Side
+                </button>
+            </div>
+
+            {/* 3D Canvas Container */}
+            <div className="w-full flex-1 min-h-0 relative">
                 <WebGLErrorBoundary onReset={() => setCanvasKey((k) => k + 1)}>
                     <Canvas
                         key={canvasKey}
@@ -146,16 +198,43 @@ const Scene = () => {
                 </WebGLErrorBoundary>
             </div>
 
-            <div className="flex justify-center items-center flex-row gap-4 mt-[80px] mb-2 shrink-0">
-                <p className="text-gray-600">Open</p>
-                <ToggleButton
-                    setState={setIsOpen}
-                    isOpen={isOpen}
-                />
-                <p className="text-gray-600">Closed</p>
+            {/* Bottom Floating Packlane HUD: Lid State & 2D/3D Switcher */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3 bg-white/95 backdrop-blur-md px-4 py-2 rounded-full border border-[#DCCFC2] shadow-md">
+                {/* Packlane-Style Lid State Pill */}
+                <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold text-[#6B584D] uppercase tracking-wider">Lid:</span>
+                    <button
+                        type="button"
+                        onClick={() => setIsOpen((prev) => !prev)}
+                        className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${
+                            isOpen
+                                ? "bg-[#A94F32] text-white shadow-xs"
+                                : "bg-[#2B211B] text-[#FFFDFC] shadow-xs"
+                        }`}
+                    >
+                        <span>{isOpen ? "Open" : "Closed"}</span>
+                    </button>
+                </div>
+
+                <div className="w-[1px] h-5 bg-[#DCCFC2]" />
+
+                {/* Switch to 2D Net / 3D Box Toggle */}
+                <button
+                    type="button"
+                    onClick={() => setActiveItem(activeItem === 'design' ? 'boxtype' : 'design')}
+                    className="text-xs font-bold text-[#2B211B] hover:text-[#A94F32] transition-colors flex items-center gap-1.5"
+                >
+                    <span>{activeItem === 'design' ? "Close 2D Net" : "Edit 2D Net"}</span>
+                </button>
             </div>
 
-        </>
+            {/* Bottom Left Subtle Interaction Guide */}
+            <div className="absolute bottom-3 left-3 z-10 pointer-events-none hidden sm:block">
+                <span className="text-[10px] text-[#6B584D] font-medium bg-white/70 backdrop-blur-xs px-2 py-1 rounded-md border border-[#DCCFC2]/60">
+                    Drag to rotate • Scroll to zoom
+                </span>
+            </div>
+        </div>
     );
 };
 

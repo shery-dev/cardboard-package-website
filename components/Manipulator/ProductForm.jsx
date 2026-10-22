@@ -34,7 +34,7 @@ const CUSTOM_BOX_CART_IMAGE = '/products/Food.png';
 
 const ProductForm = ({ data }) => {
     const router = useRouter();
-    const { material, quantity, selectedSize, setItemsList, viewType,
+    const { material, quantity, setQuantity, selectedSize, setItemsList, viewType,
         imagePositions, imageSizes, imageRotations, images, extTexImg, sideColors, extTexImgBlob,
         activeBoxPreset
     } = useAppContext();
@@ -173,68 +173,108 @@ const ProductForm = ({ data }) => {
     const materialDesc = MATERIAL_DESCRIPTIONS[currentMaterial] ?? MATERIAL_DESCRIPTIONS.Kraft;
 
     return (
-        <div className="w-full flex-1 min-h-0 flex flex-col max-w-sm mx-auto bg-white shadow-md rounded-md p-4 overflow-hidden min-w-0 h-full min-h-[calc(100%+180px)]">
-            <div className="flex-1 min-h-0 overflow-auto">
-                <div className="mb-2 pb-2 border-b border-green-50">
-                    <div className="rounded-md bg-teal-500/90 px-3 py-1.5 mb-1.5">
-                        <span className="text-white font-semibold text-base">{currentMaterial}</span>
-                    </div>
-                    <p className="text-gray-600 text-sm rounded bg-gray-100 px-3 py-1.5">
-                        {materialDesc}
-                    </p>
-                </div>
-                <div className="mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
+        <div className="w-full h-full flex flex-col bg-white rounded-xl border border-[#DCCFC2] shadow-xs p-4 overflow-hidden">
+            {/* Header / Active Box Info */}
+            <div className="pb-3 border-b border-[#DCCFC2]">
+                <div className="flex items-center justify-between gap-1 mb-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#A94F32] bg-[#A94F32]/10 px-2 py-0.5 rounded">
                         {activeBoxPreset?.badge || "Custom Packaging"}
                     </span>
-                    <h2 className="text-lg font-bold text-headingTxtColor leading-tight mt-0.5">
-                        {activeBoxPreset?.name || data?.cardboardname || 'Standard Mailer Box'}
-                    </h2>
-                    <p className="text-gray-500 text-xs mt-0.5 font-medium">
-                        {activeBoxPreset?.category || 'Custom Box'}
-                    </p>
-                    {activeBoxPreset?.description && (
-                        <p className="text-gray-600 mt-1 pb-1 text-xs text-justify border-b border-green-50 line-clamp-2">
-                            {activeBoxPreset.description}
+                    <span className="text-[11px] font-semibold text-[#6B584D]">
+                        {currentMaterial}
+                    </span>
+                </div>
+                <h2 className="text-base font-bold text-[#2B211B] leading-tight">
+                    {activeBoxPreset?.name || data?.cardboardname || 'Standard Mailer Box'}
+                </h2>
+                <p className="text-[11px] text-[#6B584D] mt-0.5">
+                    {activeBoxPreset?.category || 'Custom Box'}
+                </p>
+            </div>
+
+            {/* Scrollable Summary Body */}
+            <div className="flex-1 min-h-0 overflow-y-auto py-3 flex flex-col gap-3">
+                {/* Real-time Price Hero */}
+                <div className="p-3 bg-[#FAF7F2] rounded-lg border border-[#DCCFC2]">
+                    <div className="flex items-baseline justify-between">
+                        <div>
+                            <span className="text-2xl font-bold text-[#2B211B]">
+                                ${Number(unitPrice).toFixed(2)}
+                            </span>
+                            <span className="text-xs text-[#6B584D] ml-1">/ unit</span>
+                        </div>
+                        <div className="text-right">
+                            <span className="text-xs text-[#6B584D] block">Subtotal</span>
+                            <span className="text-lg font-bold text-[#A94F32]">
+                                ${Number(subtotal).toFixed(2)}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Volume Tiers Quick Selector (Packlane style) */}
+                <div>
+                    <label className="text-[11px] font-bold text-[#2B211B] uppercase tracking-wider block mb-1.5">
+                        Select Quantity
+                    </label>
+                    <div className="grid grid-cols-4 gap-1.5">
+                        {[500, 1000, 2500, 5000].map((qty) => {
+                            const isSelected = Number(quantity) === qty;
+                            return (
+                                <button
+                                    key={qty}
+                                    type="button"
+                                    onClick={() => setQuantity && setQuantity(qty)}
+                                    className={`py-1.5 px-1 rounded-md text-center transition-all border ${
+                                        isSelected
+                                            ? "bg-[#2B211B] text-[#FFFDFC] border-[#2B211B] shadow-xs font-bold"
+                                            : "bg-[#FAF7F2] text-[#2B211B] border-[#DCCFC2] hover:border-[#2B211B] text-xs font-semibold"
+                                    }`}
+                                >
+                                    <span className="block text-xs">{qty}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                    {!quantityValid && (
+                        <p className="text-amber-700 text-[11px] mt-1 font-medium">
+                            Minimum order quantity is 500 units.
                         </p>
                     )}
                 </div>
-                <div className="flex-1 flex flex-col justify-between min-h-[200px] w-full min-w-0 py-2">
-                    <div className="flex justify-between items-center gap-2 py-2 border-b border-gray-100 w-full">
-                        <span className="font-semibold text-gray-800 text-sm shrink-0">Size</span>
-                        <span className="text-gray-700 text-sm text-right truncate min-w-0">{selectedSize ? `${selectedSize.length} × ${selectedSize.width} × ${selectedSize.depth}` : "—"}</span>
+
+                {/* Specifications List */}
+                <div className="space-y-1.5 text-xs">
+                    <div className="flex justify-between py-1 border-b border-[#DCCFC2]/60">
+                        <span className="text-[#6B584D] font-medium">Dimensions (L×W×D)</span>
+                        <span className="font-semibold text-[#2B211B]">
+                            {selectedSize ? `${selectedSize.length}″ × ${selectedSize.width}″ × ${selectedSize.depth}″` : "—"}
+                        </span>
                     </div>
-                    <div className="flex justify-between items-center gap-2 py-2 border-b border-gray-100 w-full">
-                        <span className="font-semibold text-gray-800 text-sm shrink-0">Material</span>
-                        <span className="text-gray-700 text-sm text-right truncate min-w-0">{material || "Kraft"}</span>
+                    <div className="flex justify-between py-1 border-b border-[#DCCFC2]/60">
+                        <span className="text-[#6B584D] font-medium">Material Finish</span>
+                        <span className="font-semibold text-[#2B211B]">{material || "Kraft"}</span>
                     </div>
-                    <div className="flex justify-between items-center gap-2 py-2 border-b border-gray-100 w-full">
-                        <span className="font-semibold text-gray-800 text-sm shrink-0">Quantity</span>
-                        <span className="text-gray-700 text-sm text-right">{quantity != null ? String(quantity) : "—"}</span>
-                    </div>
-                    {!quantityValid && <p className="text-amber-600 text-xs py-1">Please add 500 or more quantity (from the left panel).</p>}
-                    <div className="flex justify-between items-center gap-2 py-2 border-b border-gray-100 w-full">
-                        <span className="font-semibold text-gray-800 text-sm shrink-0">Unit price</span>
-                        <span className="text-gray-700 font-medium text-sm text-right">$ {Number(unitPrice).toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between items-center gap-2 py-2 border-b border-gray-100 w-full">
-                        <span className="font-semibold text-gray-800 text-sm shrink-0">Subtotal</span>
-                        <span className="text-headingTxtColor font-semibold text-sm text-right">$ {Number(subtotal).toFixed(2)}</span>
+                    <div className="flex justify-between py-1 border-b border-[#DCCFC2]/60">
+                        <span className="text-[#6B584D] font-medium">Production Time</span>
+                        <span className="font-semibold text-[#2B211B]">5–7 business days</span>
                     </div>
                 </div>
             </div>
-            <div className="pt-2 shrink-0 border-t border-gray-100 relative z-10">
+
+            {/* Bottom Actions */}
+            <div className="pt-3 border-t border-[#DCCFC2] flex flex-col gap-2 shrink-0">
                 <button
                     type="button"
-                    className="w-full bg-headingTxtColor text-white py-2 text-sm rounded-md hover:bg-headingHover disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-[#2B211B] hover:bg-[#A94F32] text-[#FFFDFC] py-2.5 px-4 text-xs font-bold uppercase tracking-wider rounded-lg transition-colors shadow-xs disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleAddToCart(); }}
                     disabled={!quantityValid || subtotal <= 0 || addingToCart}
                 >
-                    {addingToCart ? 'Adding...' : 'Add to Cart'}
+                    {addingToCart ? 'Adding to Cart...' : 'Add to Cart'}
                 </button>
                 <button
                     type="button"
-                    className="w-full bg-headingTxtColor text-white py-2 text-sm mt-2 rounded-md hover:bg-headingHover disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-white hover:bg-[#FAF7F2] text-[#2B211B] border border-[#DCCFC2] py-2 px-4 text-xs font-bold rounded-lg transition-colors"
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSaveDesign(); }}
                 >
                     Save Design

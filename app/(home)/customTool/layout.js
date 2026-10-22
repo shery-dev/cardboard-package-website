@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export default function ManipulatorLayout({ children }) {
   return (
-    <div className="min-h-[calc(90vh-3.5rem+5px)] h-full flex flex-col overflow-hidden pt-[2vh]">
+    <div className="h-[calc(100vh-68px)] w-full flex flex-col overflow-hidden bg-[#FAF7F2]">
       <MainAppContainer>{children}</MainAppContainer>
     </div>
   );
