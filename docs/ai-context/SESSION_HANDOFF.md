@@ -10,6 +10,11 @@
 
 - Resolved JSX entity escaping errors in `components/Manipulator/tools/BoxTypesList.jsx` and `components/Manipulator/tools/FeatureProductList.jsx`.
 - Added `eslint: { ignoreDuringBuilds: true }` to `next.config.mjs` to ensure CI builds succeed smoothly on Vercel without halting on legacy third-party hook warnings.
+- Modernized 3D customizer (`/customTool`) with Packlane-style packaging workshop UI:
+  - Top header bar with active box pill, 3-step workflow stepper (`1. Size & Material` → `2. Design & Artwork` → `3. Quantity & Pricing`), and quick step transitions.
+  - Sleek vertical tool dock (`SideBar3D.jsx`) with tactile espresso/kraft design tokens.
+  - Floating 3D viewport HUD (`Scene.jsx`) with quick camera angle presets (`3D / Front / Top / Side`), animated Open/Closed lid switch, and 2D net toggle.
+  - Redesigned Packlane-style order summary & live pricing card (`ProductForm.jsx`) with volume quantity tier selector (`500, 1000, 2500, 5000`) and real-time subtotal updates.
 - Fixed `ReferenceError: creds is not defined` and password matching logic in `app/api/v1/admin-login/route.js`. Replaced out-of-scope `creds.email` with `adminEmail` and prioritized `adminPasswordPlain` match before fallback bcrypt comparison. Verified 200 OK login response locally.
 - Set `"engines": { "node": "24.x" }` in `package.json` to satisfy Vercel platform engine requirements.
 - Configured `.env.local` containing local JWT, Stripe, URL, and Admin keys (verified 100% excluded from git).
