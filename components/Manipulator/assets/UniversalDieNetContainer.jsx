@@ -80,13 +80,18 @@ export default function UniversalDieNetContainer() {
     canvas.width = exportWidth;
     canvas.height = exportHeight;
 
-    const svgData = new XMLSerializer().serializeToString(svgElement);
+    // Clone SVG and hide technical text/measurements so only clean artwork and panel colors export to 3D
+    const clonedSvg = svgElement.cloneNode(true);
+    clonedSvg.querySelectorAll('text').forEach((t) => (t.style.display = 'none'));
+    clonedSvg.querySelectorAll('line').forEach((l) => (l.style.display = 'none'));
+
+    const svgData = new XMLSerializer().serializeToString(clonedSvg);
     const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(svgBlob);
 
     const img = new Image();
     img.onload = () => {
-      ctx.fillStyle = extTexColor || '#9f6e33';
+      ctx.fillStyle = extTexColor || '#C7A882';
       ctx.fillRect(0, 0, exportWidth, exportHeight);
       ctx.drawImage(img, 0, 0, exportWidth, exportHeight);
 
@@ -106,32 +111,33 @@ export default function UniversalDieNetContainer() {
     setTimeout(() => setApplied(false), 800);
   };
 
-  // Section click for individual panel color selection
+  // Section click selects the face and tells 3D camera to focus on that face WITHOUT changing colors
   const handleSectionClick = (sideKey) => {
     setSelectedSection(sideKey);
     if (setSelectedSide) setSelectedSide(sideKey);
-    if (selectedColor && setSideColors) {
+  };
+
+  // Explicit user color pick for the active panel
+  const handleColorPick = (color) => {
+    if (!selectedSection) return;
+    if (setSideColors) {
       setSideColors((prev) => ({
         ...prev,
-        [sideKey]: selectedColor,
+        [selectedSection]: color,
       }));
-      setTimeout(() => convertSvgToJpg(), 150);
     }
   };
 
-  // When selected color changes and section is active, apply it
-  useEffect(() => {
-    if (selectedSection && selectedColor && setSideColors) {
+  const handleResetPanelColor = () => {
+    if (!selectedSection) return;
+    if (setSideColors) {
       setSideColors((prev) => {
-        if (prev[selectedSection] === selectedColor) return prev;
-        return {
-          ...prev,
-          [selectedSection]: selectedColor,
-        };
+        const next = { ...prev };
+        delete next[selectedSection];
+        return next;
       });
-      setTimeout(() => convertSvgToJpg(), 150);
     }
-  }, [selectedColor, selectedSection, setSideColors, convertSvgToJpg]);
+  };
 
   // Image Upload handler
   const handleImageUpload = (event) => {
@@ -333,23 +339,68 @@ export default function UniversalDieNetContainer() {
           </p>
         </div>
       ) : (
-        <div className="flex items-center justify-between p-2 bg-[#FAF8F5] rounded-md border border-[#DCCFC2] text-xs">
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] text-[#6B584D]">Click any panel on the die below to paint:</span>
-            {selectedSection && (
-              <span className="font-bold text-[#A94F32] uppercase text-[10px] bg-white px-2 py-0.5 rounded border border-[#DCCFC2]">
-                {selectedSection}
+        <div className="flex flex-col gap-2 p-2 bg-[#FAF8F5] rounded-md border border-[#DCCFC2] text-xs">
+          <div className="flex items-center justify-between gap-1">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-[#6B584D]">Active Panel:</span>
+              <span className="font-bold text-[#2B211B] uppercase text-[10px] bg-white px-2 py-0.5 rounded border border-[#DCCFC2]">
+                {selectedSection || "Click a panel below"}
               </span>
+            </div>
+            {selectedSection && (
+              <button
+                type="button"
+                onClick={handleResetPanelColor}
+                className="text-[10px] text-[#A94F32] hover:underline font-semibold"
+              >
+                Reset Color
+              </button>
             )}
+            <button
+              type="button"
+              onClick={applyDesignTo3D}
+              className="flex items-center gap-1 px-3 py-1 text-xs font-bold rounded bg-[#15803D] text-white hover:bg-[#166534] transition-colors shadow-xs ml-auto"
+              title="Update 3D model with customized die net"
+            >
+              <span>{applied ? "Applying..." : "Apply to 3D"}</span>
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={applyDesignTo3D}
-            className="flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded bg-[#15803D] text-white hover:bg-[#166534] transition-colors shadow-xs"
-            title="Update 3D model with customized die net"
-          >
-            <span>{applied ? "Applying..." : "Apply to 3D"}</span>
-          </button>
+
+          {/* Color Palette Swatches */}
+          {selectedSection && (
+            <div className="flex items-center gap-1.5 pt-1 border-t border-[#EADFD5]">
+              <span className="text-[10px] text-[#6B584D] font-bold">Pick Color:</span>
+              <div className="flex items-center gap-1 flex-wrap">
+                {[
+                  { name: 'Kraft', hex: '#C7A882' },
+                  { name: 'White', hex: '#FFFFFF' },
+                  { name: 'Black', hex: '#212121' },
+                  { name: 'Terracotta', hex: '#A94F32' },
+                  { name: 'Forest', hex: '#15803D' },
+                  { name: 'Navy', hex: '#1E3A8A' },
+                  { name: 'Red', hex: '#DC2626' },
+                  { name: 'Amber', hex: '#D97706' },
+                ].map((swatch) => (
+                  <button
+                    key={swatch.name}
+                    type="button"
+                    onClick={() => handleColorPick(swatch.hex)}
+                    title={swatch.name}
+                    className="w-5 h-5 rounded-full border border-gray-300 shadow-xs hover:scale-110 transition-transform"
+                    style={{ backgroundColor: swatch.hex }}
+                  />
+                ))}
+                {/* Custom Color Input */}
+                <input
+                  type="color"
+                  title="Custom Hex Color"
+                  value={sideColors[selectedSection] || "#C7A882"}
+                  onChange={(e) => handleColorPick(e.target.value)}
+                  className="w-6 h-6 p-0 border border-gray-300 rounded cursor-pointer bg-transparent"
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
 

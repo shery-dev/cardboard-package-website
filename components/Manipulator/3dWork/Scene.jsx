@@ -3,7 +3,6 @@
 import { Canvas } from '@react-three/fiber'
 import { ContactShadows, Environment, OrbitControls, CameraControls, useProgress, Html } from '@react-three/drei'
 import { Suspense, useEffect, useRef, useState } from 'react'
-import { useSpring, a } from '@react-spring/three';
 import { MailerBox } from './Boxes/MailerBox'
 import { PizzaBox } from './Boxes/PizzaBox'
 import { ShippingBox } from './Boxes/ShippingBox'
@@ -22,8 +21,6 @@ const Scene = () => {
     const { isOpen, setIsOpen, selectedSide, box, activeItem, setActiveItem } = useAppContext()
     const cameraControlRef = useRef();
     const [canvasKey, setCanvasKey] = useState(0);
-
-    const [spring, setSpring] = useSpring(() => ({ rotation: [0, 0, 0] }))
 
     const setCameraView = (view) => {
         const ctrl = cameraControlRef.current;
@@ -52,42 +49,25 @@ const Scene = () => {
 
     useEffect(() => {
         const cameraControls = cameraControlRef.current;
+        if (!cameraControls || !selectedSide) return;
 
-        if (!cameraControls) return;
+        const side = String(selectedSide).toLowerCase();
 
-
-        if (selectedSide === 'topFront') {
-            cameraControls.rotateTo(Math.PI * 2, Math.PI / 2);
-            setIsOpen(false);
-            setSpring({ rotation: [0, 0, 0] });
-        } else if (selectedSide === 'top') {
-            cameraControls.rotateTo(Math.PI * 2, Math.PI / 2);
-            setIsOpen(false);
-            setSpring({ rotation: [Math.PI / 2, 0, 0] });
-        } else if (selectedSide === 'topBack') {
-            cameraControls.rotateTo(Math.PI * 2, Math.PI / 2);
-            setIsOpen(false);
-            setSpring({ rotation: [0, Math.PI, 0] });
-        } else if (selectedSide === 'bottomFront') {
-            cameraControls.rotateTo(Math.PI * 2, Math.PI / 2);
-            setIsOpen(true);
-            setSpring({ rotation: [0, 0, 0] });
-        } else if (selectedSide === 'bottom') {
-            cameraControls.rotateTo(Math.PI * 2, Math.PI / 2);
-            setIsOpen(false);
-            setSpring({ rotation: [-Math.PI / 2, 0, 0] });
-        } else if (selectedSide === 'bottomRight') {
-            cameraControls.rotateTo(Math.PI * 2, Math.PI / 2);
-            setIsOpen(false);
-            setSpring({ rotation: [0, Math.PI / 2, 0] });
+        // Smooth camera navigation to focus directly on the clicked side of the box
+        if (side.includes('front') || side === 'topfront' || side === 'bottomfront' || side === 'lidfront') {
+            cameraControls.setLookAt(0, -1, 13, 0, -1, 0, true);
+        } else if (side.includes('back') || side === 'topback' || side === 'backwall') {
+            cameraControls.setLookAt(0, -1, -13, 0, -1, 0, true);
+        } else if (side === 'top' || side.includes('lid') || side === 'cover') {
+            cameraControls.setLookAt(0, 14, 0.001, 0, -1, 0, true);
+        } else if (side === 'bottom' || side === 'base' || side === 'tray') {
+            cameraControls.setLookAt(0, -11, 4, 0, -2, 0, true);
+        } else if (side.includes('left')) {
+            cameraControls.setLookAt(-14, -1, 0, 0, -1, 0, true);
+        } else if (side.includes('right')) {
+            cameraControls.setLookAt(14, -1, 0, 0, -1, 0, true);
         }
-        else if (selectedSide === 'bottomLeft') {
-            cameraControls.rotateTo(Math.PI * 2, Math.PI / 2);
-            setIsOpen(false);
-            setSpring({ rotation: [0, -Math.PI / 2, 0] });
-        }
-
-    }, [selectedSide, setSpring]);
+    }, [selectedSide]);
 
     return (
         <div className="relative w-full h-full min-h-[500px] flex flex-col rounded-xl overflow-hidden border border-[#DCCFC2] bg-gradient-to-b from-[#FAF7F2] via-[#F4EFEA] to-[#EAE3D9] shadow-xs">
@@ -155,7 +135,7 @@ const Scene = () => {
                             <spotLight intensity={0.5} angle={0.1} penumbra={1} position={[10, 150, -15]} castShadow />
                             <Environment preset="city" blur={1} />
                             <ContactShadows resolution={512} position={[0, -1.8, 0]} opacity={1} scale={10} blur={2} far={0.8} />
-                            <a.group rotation={spring.rotation}>
+                            <group position={[0, 0, 0]}>
                                 {box === "pizzaBox" ? (
                                     <PizzaBox />
                                 ) : box === "pizzaSliceBox" ? (
@@ -191,7 +171,7 @@ const Scene = () => {
                                 ) : (
                                     <MailerBox />
                                 )}
-                            </a.group>
+                            </group>
                             <OrbitControls />
                         </Suspense>
                     </Canvas>
