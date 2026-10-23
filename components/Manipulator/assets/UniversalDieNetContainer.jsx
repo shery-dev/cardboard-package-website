@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { FaImages, FaTrash, FaArrowUp, FaArrowDown, FaArrowLeft, FaArrowRight, FaRotate } from "react-icons/fa6";
+import { FaImages, FaTrash, FaArrowUp, FaArrowDown, FaArrowLeft, FaArrowRight, FaRotate, FaFont, FaDownload } from "react-icons/fa6";
 import { IoMdColorPalette } from "react-icons/io";
 import classNames from 'classnames';
 import { useAppContext } from "@/context/Context";
@@ -12,18 +12,32 @@ const VIEWBOX_HEIGHT = 440;
 const MARGIN = 10;
 const ARROW_STEP = 5;
 
-export default function UniversalDieNetContainer() {
-  const [selectedItem, setSelectedItem] = useState('color'); // 'color' | 'images'
+const PACKAGING_FONTS = [
+  { label: 'DM Sans (Modern UI)', value: 'DM Sans, sans-serif' },
+  { label: 'Newsreader (Editorial Serif)', value: 'Newsreader, serif' },
+  { label: 'Impact (Heavy Bold)', value: 'Impact, sans-serif' },
+  { label: 'Courier (Technical Monospace)', value: 'Courier New, monospace' },
+  { label: 'Arial (Clean Neutral)', value: 'Arial, sans-serif' },
+];
+
+export default function UniversalDieNetContainer({ activeTool, isFullCanvas = false }) {
+  const [selectedItem, setSelectedItem] = useState(activeTool || 'color'); // 'color' | 'images' | 'text'
   const [selectedSection, setSelectedSection] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [images, setImages] = useState({});
+  const [selectedTextId, setSelectedTextId] = useState(null);
+  const [newTextString, setNewTextString] = useState('BRAND LOGO');
+  const [selectedFont, setSelectedFont] = useState(PACKAGING_FONTS[0].value);
+  const [selectedFontSize, setSelectedFontSize] = useState(22);
+  const [selectedTextColor, setSelectedTextColor] = useState('#2B211B');
+  const [isBold, setIsBold] = useState(true);
+  const [isItalic, setIsItalic] = useState(false);
+
   const [dragging, setDragging] = useState(false);
+  const [textDragging, setTextDragging] = useState(false);
   const [resizing, setResizing] = useState(false);
   const [rotating, setRotating] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [imagePositions, setImagePositions] = useState({});
-  const [imageSizes, setImageSizes] = useState({});
-  const [imageRotations, setImageRotations] = useState({});
+  const [textDragStart, setTextDragStart] = useState({ x: 0, y: 0 });
   const [applied, setApplied] = useState(false);
 
   const svgRef = useRef(null);
@@ -42,7 +56,25 @@ export default function UniversalDieNetContainer() {
     activeBoxPreset,
     box,
     selectedSize,
+    images,
+    setImages,
+    imagePositions,
+    setImagePositions,
+    imageSizes,
+    setImageSizes,
+    imageRotations,
+    setImageRotations,
+    textElements,
+    setTextElements,
+    viewMode,
+    setViewMode,
   } = useAppContext();
+
+  useEffect(() => {
+    if (activeTool) {
+      setSelectedItem(activeTool);
+    }
+  }, [activeTool]);
 
   // Match preset ID by activeBoxPreset or fallback by box modelType
   const presetId = activeBoxPreset?.id || (
@@ -81,9 +113,9 @@ export default function UniversalDieNetContainer() {
     canvas.width = exportWidth;
     canvas.height = exportHeight;
 
-    // Clone SVG and hide technical text/measurements so only clean artwork and panel colors export to 3D
+    // Clone SVG and hide technical text/measurements while preserving user typography
     const clonedSvg = svgElement.cloneNode(true);
-    clonedSvg.querySelectorAll('text').forEach((t) => (t.style.display = 'none'));
+    clonedSvg.querySelectorAll('text:not(.user-custom-text)').forEach((t) => (t.style.display = 'none'));
     clonedSvg.querySelectorAll('line').forEach((l) => (l.style.display = 'none'));
 
     const svgData = new XMLSerializer().serializeToString(clonedSvg);
@@ -108,11 +140,25 @@ export default function UniversalDieNetContainer() {
 
   const applyDesignTo3D = () => {
     setApplied(true);
-    // Only rasterize 2D SVG canvas into 3D image blob if user has uploaded custom artwork
-    if (Object.keys(images).length > 0) {
+    // Only rasterize 2D SVG canvas into 3D image blob if user has uploaded custom artwork or added text
+    if (Object.keys(images || {}).length > 0 || Object.keys(textElements || {}).length > 0) {
       convertSvgToJpg();
     }
     setTimeout(() => setApplied(false), 800);
+  };
+
+  const handleDownloadSVG = () => {
+    const svgElement = svgRef.current;
+    if (!svgElement) return;
+    const serializer = new XMLSerializer();
+    const source = serializer.serializeToString(svgElement);
+    const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${presetId}-${len}x${wid}x${dep}-packlane-dieline.svg`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   // Section click selects the face and tells 3D camera to focus smoothly on that face WITHOUT changing colors
@@ -202,11 +248,70 @@ export default function UniversalDieNetContainer() {
     reader.readAsDataURL(file);
   };
 
-  // Drag, Resize, and Rotate Handlers
+  // Custom Text handlers
+  const handleAddText = () => {
+    const id = `txt-${Date.now()}`;
+    const x = VIEWBOX_WIDTH / 2;
+    const y = VIEWBOX_HEIGHT / 2;
+    if (setTextElements) {
+      setTextElements((prev) => ({
+        ...prev,
+        [id]: {
+          id,
+          text: newTextString || 'BRAND TEXT',
+          x,
+          y,
+          fontSize: selectedFontSize,
+          fontFamily: selectedFont,
+          color: selectedTextColor,
+          isBold,
+          isItalic,
+          rotation: 0,
+        },
+      }));
+    }
+    setSelectedTextId(id);
+    setSelectedImage(null);
+    setSelectedItem('text');
+    setTimeout(() => convertSvgToJpg(), 250);
+  };
+
+  const updateSelectedText = (updates) => {
+    if (!selectedTextId || !setTextElements) return;
+    setTextElements((prev) => ({
+      ...prev,
+      [selectedTextId]: {
+        ...prev[selectedTextId],
+        ...updates,
+      },
+    }));
+    setTimeout(() => convertSvgToJpg(), 200);
+  };
+
+  const handleDeleteText = () => {
+    if (!selectedTextId || !setTextElements) return;
+    const id = selectedTextId;
+    setTextElements((prev) => {
+      const n = { ...prev };
+      delete n[id];
+      return n;
+    });
+    setSelectedTextId(null);
+    setTimeout(() => convertSvgToJpg(), 200);
+  };
+
+  const handleTextRotate = (degrees) => {
+    if (!selectedTextId || !setTextElements || !textElements[selectedTextId]) return;
+    const current = textElements[selectedTextId].rotation || 0;
+    updateSelectedText({ rotation: (current + degrees) % 360 });
+  };
+
+  // Drag, Resize, and Rotate Handlers for Images
   const handleMouseDown = (event, id) => {
     if (selectedItem !== 'images') return;
     event.stopPropagation();
     setSelectedImage(id);
+    setSelectedTextId(null);
     setDragging(true);
     const svgRect = svgRef.current.getBoundingClientRect();
     const scaleX = VIEWBOX_WIDTH / svgRect.width;
@@ -217,13 +322,41 @@ export default function UniversalDieNetContainer() {
     });
   };
 
-  const handleMouseMove = (event) => {
-    if (!selectedImage) return;
+  // Drag Handler for Text
+  const handleTextMouseDown = (event, id) => {
+    event.stopPropagation();
+    setSelectedTextId(id);
+    setSelectedImage(null);
+    setSelectedItem('text');
+    setTextDragging(true);
     const svgRect = svgRef.current.getBoundingClientRect();
+    const scaleX = VIEWBOX_WIDTH / svgRect.width;
+    const scaleY = VIEWBOX_HEIGHT / svgRect.height;
+    setTextDragStart({
+      x: (event.clientX - svgRect.left) * scaleX - (textElements[id]?.x || 0),
+      y: (event.clientY - svgRect.top) * scaleY - (textElements[id]?.y || 0),
+    });
+  };
+
+  const handleMouseMove = (event) => {
+    const svgRect = svgRef?.current?.getBoundingClientRect();
+    if (!svgRect) return;
     const scaleX = VIEWBOX_WIDTH / svgRect.width;
     const scaleY = VIEWBOX_HEIGHT / svgRect.height;
     const currentX = (event.clientX - svgRect.left) * scaleX;
     const currentY = (event.clientY - svgRect.top) * scaleY;
+
+    if (textDragging && selectedTextId && setTextElements) {
+      const newX = Math.max(MARGIN, Math.min(VIEWBOX_WIDTH - MARGIN, currentX - textDragStart.x));
+      const newY = Math.max(MARGIN, Math.min(VIEWBOX_HEIGHT - MARGIN, currentY - textDragStart.y));
+      setTextElements((prev) => ({
+        ...prev,
+        [selectedTextId]: { ...prev[selectedTextId], x: Math.round(newX), y: Math.round(newY) },
+      }));
+      return;
+    }
+
+    if (!selectedImage) return;
 
     if (dragging) {
       const newX = Math.max(MARGIN, Math.min(VIEWBOX_WIDTH - (imageSizes[selectedImage]?.width || 80) - MARGIN, currentX - dragStart.x));
@@ -257,10 +390,11 @@ export default function UniversalDieNetContainer() {
   };
 
   const handleMouseUp = () => {
-    if (dragging || resizing || rotating) {
+    if (dragging || resizing || rotating || textDragging) {
       setTimeout(() => convertSvgToJpg(), 200);
     }
     setDragging(false);
+    setTextDragging(false);
     setResizing(false);
     setRotating(false);
   };
@@ -277,6 +411,12 @@ export default function UniversalDieNetContainer() {
   };
 
   const handleArrowMove = (dx, dy) => {
+    if (selectedItem === 'text' && selectedTextId) {
+      const current = textElements[selectedTextId];
+      if (!current) return;
+      updateSelectedText({ x: current.x + dx, y: current.y + dy });
+      return;
+    }
     if (!selectedImage) return;
     const pos = imagePositions[selectedImage] || { x: 0, y: 0 };
     const size = imageSizes[selectedImage] || { width: 100, height: 100 };
@@ -291,10 +431,12 @@ export default function UniversalDieNetContainer() {
     return sideColors[sideKey] || extTexColor || '#E8DCCF';
   };
 
+  const activeTextObj = selectedTextId && textElements ? textElements[selectedTextId] : null;
+
   return (
-    <div className="w-full flex flex-col gap-2">
-      {/* Mode Switcher: Color Panel vs Add Images */}
-      <div className="flex bg-[#F7F3ED] rounded-lg border border-[#DCCFC2] p-1">
+    <div className={`w-full flex flex-col gap-2 ${isFullCanvas ? 'h-full' : ''}`}>
+      {/* Packlane-Style Mode Switcher */}
+      <div className="flex bg-[#F7F3ED] rounded-lg border border-[#DCCFC2] p-1 gap-1 shrink-0">
         <button
           type="button"
           onClick={() => setSelectedItem('color')}
@@ -304,7 +446,7 @@ export default function UniversalDieNetContainer() {
           )}
         >
           <IoMdColorPalette className="text-sm" />
-          <span>Panel Colors</span>
+          <span>Colors</span>
         </button>
         <button
           type="button"
@@ -315,15 +457,37 @@ export default function UniversalDieNetContainer() {
           )}
         >
           <FaImages className="text-sm" />
-          <span>Add Images & Logos</span>
+          <span>Logos / Art</span>
         </button>
+        <button
+          type="button"
+          onClick={() => setSelectedItem('text')}
+          className={classNames(
+            'flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold rounded-md transition-all',
+            selectedItem === 'text' ? 'bg-[#2B211B] text-[#FFFDFC] shadow-xs' : 'text-[#6B584D] hover:text-[#2B211B]'
+          )}
+        >
+          <FaFont className="text-sm" />
+          <span>Add Text</span>
+        </button>
+        {isFullCanvas && (
+          <button
+            type="button"
+            onClick={handleDownloadSVG}
+            className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-md bg-white border border-[#DCCFC2] text-[#2B211B] hover:bg-[#F2ECE4] shadow-2xs"
+            title="Download Vector CAD Dieline SVG"
+          >
+            <FaDownload className="text-xs" />
+            <span className="hidden sm:inline">Export Dieline</span>
+          </button>
+        )}
       </div>
 
-      {/* Sub-toolbar */}
-      {selectedItem === 'images' ? (
-        <div className="flex flex-col gap-2 p-2.5 bg-[#FAF8F5] rounded-md border border-[#DCCFC2]">
-          <div className="flex items-center justify-between gap-2">
-            <label className="cursor-pointer px-3 py-1.5 text-xs font-bold rounded bg-[#2B211B] text-[#FFFDFC] hover:bg-[#A94F32] transition-colors">
+      {/* Sub-toolbars by Selected Mode */}
+      {selectedItem === 'images' && (
+        <div className="flex flex-col gap-2 p-2.5 bg-[#FAF8F5] rounded-md border border-[#DCCFC2] shrink-0 text-xs">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <label className="cursor-pointer px-3 py-1.5 text-xs font-bold rounded bg-[#2B211B] text-[#FFFDFC] hover:bg-[#A94F32] transition-colors shadow-xs">
               <span>+ Upload Logo / Artwork</span>
               <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
             </label>
@@ -371,18 +535,126 @@ export default function UniversalDieNetContainer() {
                 </button>
               </div>
             )}
+            <button
+              type="button"
+              onClick={applyDesignTo3D}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded bg-[#15803D] text-white hover:bg-[#166534] transition-colors shadow-xs ml-auto"
+            >
+              <span>{applied ? "Applied!" : "Apply to 3D"}</span>
+            </button>
           </div>
-          <p className="text-[10px] text-gray-500">
-            Drag image to position on the die net. Blue corner squares resize; red circle rotates.
+          <p className="text-[10px] text-[#6B584D]">
+            Drag logo onto any panel of the unfolded box net. Blue handles resize; red circle rotates.
           </p>
         </div>
-      ) : (
-        <div className="flex flex-col gap-2 p-2 bg-[#FAF8F5] rounded-md border border-[#DCCFC2] text-xs">
-          <div className="flex items-center justify-between gap-1">
+      )}
+
+      {selectedItem === 'text' && (
+        <div className="flex flex-col gap-2 p-2.5 bg-[#FAF8F5] rounded-md border border-[#DCCFC2] shrink-0 text-xs">
+          <div className="flex items-center gap-2 flex-wrap">
+            <input
+              type="text"
+              value={activeTextObj ? activeTextObj.text : newTextString}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (activeTextObj) updateSelectedText({ text: val });
+                else setNewTextString(val);
+              }}
+              placeholder="Enter packaging text..."
+              className="px-2.5 py-1 text-xs border border-[#DCCFC2] rounded-md bg-white text-[#2B211B] font-medium flex-1 min-w-[140px]"
+            />
+            <select
+              value={activeTextObj ? activeTextObj.fontFamily : selectedFont}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (activeTextObj) updateSelectedText({ fontFamily: val });
+                else setSelectedFont(val);
+              }}
+              className="px-2 py-1 text-xs border border-[#DCCFC2] rounded-md bg-white text-[#2B211B]"
+            >
+              {PACKAGING_FONTS.map((f) => (
+                <option key={f.value} value={f.value}>{f.label}</option>
+              ))}
+            </select>
+            <div className="flex items-center gap-1">
+              <span className="text-[10px] font-bold text-[#6B584D]">Size:</span>
+              <input
+                type="number"
+                min="10"
+                max="60"
+                value={activeTextObj ? activeTextObj.fontSize : selectedFontSize}
+                onChange={(e) => {
+                  const val = Number(e.target.value) || 20;
+                  if (activeTextObj) updateSelectedText({ fontSize: val });
+                  else setSelectedFontSize(val);
+                }}
+                className="w-12 px-1 py-1 text-xs border border-[#DCCFC2] rounded-md bg-white text-center font-mono"
+              />
+            </div>
+            <input
+              type="color"
+              value={activeTextObj ? activeTextObj.color : selectedTextColor}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (activeTextObj) updateSelectedText({ color: val });
+                else setSelectedTextColor(val);
+              }}
+              title="Font Color"
+              className="w-6 h-6 p-0 border border-gray-300 rounded cursor-pointer bg-transparent"
+            />
+            {!activeTextObj ? (
+              <button
+                type="button"
+                onClick={handleAddText}
+                className="px-3 py-1 text-xs font-bold rounded bg-[#2B211B] text-[#FFFDFC] hover:bg-[#A94F32] transition-colors shadow-xs"
+              >
+                + Add Text
+              </button>
+            ) : (
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => handleTextRotate(90)}
+                  className="p-1.5 rounded border border-gray-300 bg-white hover:bg-gray-100 text-gray-700"
+                  title="Rotate 90°"
+                >
+                  <FaRotate className="w-3 h-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteText}
+                  className="p-1.5 rounded border border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
+                  title="Delete Text"
+                >
+                  <FaTrash className="w-3 h-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedTextId(null)}
+                  className="text-[10px] text-[#6B584D] hover:underline px-1"
+                >
+                  Deselect
+                </button>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={applyDesignTo3D}
+              className="flex items-center gap-1 px-3 py-1 text-xs font-bold rounded bg-[#15803D] text-white hover:bg-[#166534] transition-colors shadow-xs ml-auto"
+            >
+              <span>{applied ? "Applied!" : "Apply to 3D"}</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {selectedItem === 'color' && (
+        <div className="flex flex-col gap-2 p-2 bg-[#FAF8F5] rounded-md border border-[#DCCFC2] text-xs shrink-0">
+          <div className="flex items-center justify-between gap-1 flex-wrap">
             <div className="flex items-center gap-1.5">
               <span className="text-[11px] text-[#6B584D]">Active Panel:</span>
               <span className="font-bold text-[#2B211B] uppercase text-[10px] bg-white px-2 py-0.5 rounded border border-[#DCCFC2]">
-                {selectedSection || "Click a panel below"}
+                {selectedSection || "Click any face below"}
               </span>
             </div>
             {selectedSection && (
@@ -391,9 +663,9 @@ export default function UniversalDieNetContainer() {
                   type="button"
                   onClick={() => handleApplyColorToAll(sideColors[selectedSection] || '#C7A882')}
                   className="text-[10px] text-[#15803D] hover:underline font-bold"
-                  title="Apply current color across the whole box"
+                  title="Apply current panel's color across the whole box"
                 >
-                  Apply to All
+                  Apply to All Panels
                 </button>
                 <button
                   type="button"
@@ -410,7 +682,7 @@ export default function UniversalDieNetContainer() {
               className="flex items-center gap-1 px-3 py-1 text-xs font-bold rounded bg-[#15803D] text-white hover:bg-[#166534] transition-colors shadow-xs ml-auto"
               title="Update 3D model with customized die net"
             >
-              <span>{applied ? "Applying..." : "Apply to 3D"}</span>
+              <span>{applied ? "Applied!" : "Apply to 3D"}</span>
             </button>
           </div>
 
@@ -462,16 +734,24 @@ export default function UniversalDieNetContainer() {
       {/* Unfolded Flat Die Net SVG Canvas */}
       <div
         ref={containerRef}
-        className="relative w-full bg-[#FAF8F5] rounded-md border-2 border-dashed border-[#DCCFC2] p-1 flex flex-col items-center overflow-hidden"
+        className={`relative w-full bg-[#FAF8F5] rounded-md border-2 border-dashed border-[#DCCFC2] p-2 flex flex-col items-center justify-center overflow-hidden ${
+          isFullCanvas ? 'flex-1 min-h-0' : ''
+        }`}
       >
         <svg
+          id="universal-die-net-svg"
           ref={svgRef}
           viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
-          className="w-full h-auto max-h-[360px] drop-shadow-sm select-none"
+          className={`w-full drop-shadow-sm select-none ${
+            isFullCanvas ? 'h-full max-h-[82vh] object-contain' : 'h-auto max-h-[380px]'
+          }`}
           xmlns="http://www.w3.org/2000/svg"
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          onClick={() => { if (selectedItem === 'images') setSelectedImage(null); }}
+          onClick={() => {
+            if (selectedItem === 'images') setSelectedImage(null);
+            if (selectedItem === 'text') setSelectedTextId(null);
+          }}
         >
           {/* Render Active Preset's Authentic Unfolded CAD Flat Die Net */}
           {renderDieMoldCAD({
@@ -486,7 +766,7 @@ export default function UniversalDieNetContainer() {
           })}
 
           {/* User-uploaded images placed on the die */}
-          {Object.keys(images).map((key) => {
+          {Object.keys(images || {}).map((key) => {
             const pos = imagePositions[key] || { x: 0, y: 0 };
             const size = imageSizes[key] || { width: 100, height: 100 };
             const rot = imageRotations[key] || 0;
@@ -543,18 +823,67 @@ export default function UniversalDieNetContainer() {
               </g>
             );
           })}
+
+          {/* User-added Custom Typography Text Elements */}
+          {Object.keys(textElements || {}).map((key) => {
+            const t = textElements[key];
+            if (!t) return null;
+            const isSelected = selectedItem === 'text' && selectedTextId === key;
+            return (
+              <g
+                key={key}
+                transform={`rotate(${t.rotation || 0}, ${t.x}, ${t.y})`}
+                onMouseDown={(e) => handleTextMouseDown(e, key)}
+                className="cursor-move select-none"
+              >
+                <text
+                  x={t.x}
+                  y={t.y}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize={t.fontSize || 20}
+                  fontFamily={t.fontFamily || 'sans-serif'}
+                  fontWeight={t.isBold ? 'bold' : 'normal'}
+                  fontStyle={t.isItalic ? 'italic' : 'normal'}
+                  fill={t.color || '#2B211B'}
+                  className="user-custom-text pointer-events-auto"
+                >
+                  {t.text}
+                </text>
+                {isSelected && (
+                  <rect
+                    x={t.x - (t.text.length * (t.fontSize || 20) * 0.32) - 8}
+                    y={t.y - (t.fontSize || 20) * 0.65 - 4}
+                    width={t.text.length * (t.fontSize || 20) * 0.64 + 16}
+                    height={(t.fontSize || 20) * 1.3 + 8}
+                    fill="none"
+                    stroke="#2563EB"
+                    strokeWidth="1.5"
+                    strokeDasharray="4 2"
+                    pointerEvents="none"
+                  />
+                )}
+              </g>
+            );
+          })}
         </svg>
 
-        {/* Die Dimensions Callout */}
-        <div className="w-full flex items-center justify-between text-[10px] text-[#6B584D] font-mono mt-1 pt-1 border-t border-[#EADFD5]">
-          <span>Length: <strong className="text-[#2B211B]">{len}″</strong></span>
-          <span>Width: <strong className="text-[#2B211B]">{wid}″</strong></span>
-          <span>Depth: <strong className="text-[#2B211B]">{dep}″</strong></span>
+        {/* Die Dimensions Callout & Legend */}
+        <div className="w-full flex items-center justify-between text-[10px] text-[#6B584D] font-mono mt-1 pt-1 border-t border-[#EADFD5] shrink-0">
+          <div className="flex items-center gap-3">
+            <span>Length: <strong className="text-[#2B211B]">{len}″</strong></span>
+            <span>Width: <strong className="text-[#2B211B]">{wid}″</strong></span>
+            <span>Depth: <strong className="text-[#2B211B]">{dep}″</strong></span>
+          </div>
+          <div className="hidden sm:flex items-center gap-2 text-[9px]">
+            <span className="flex items-center gap-1">
+              <span className="w-3 h-0.5 bg-[#DC2626]" /> Cut
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="w-3 h-0.5 bg-[#2563EB] border-b border-dashed" /> Crease
+            </span>
+          </div>
         </div>
-      </div>
-
-      <div className="flex items-center justify-between text-[11px] text-gray-500 px-1">
-        <span>Click <strong>Apply to 3D</strong> to see customized die wrapped onto the 3D preview.</span>
       </div>
 
       {/* Hidden 2D Canvas for High-Res Texture Export */}

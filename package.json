@@ -7,6 +7,7 @@
   },
   "scripts": {
     "dev": "node --max-old-space-size=4096 node_modules/next/dist/bin/next dev",
+    "packlane": "node editor.packlane.com/deploy-local.js",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",

@@ -65,6 +65,9 @@ export default function AppContextProvider({ children }) {
     const [extTexImgBlob, setExtTexImgBlob] = useState(null)
     const [viewType, setViewType] = useState(null)
     const [selectedFeatureProduct, setSelectedFeatureProduct] = useState(null)
+    const [projectName, setProjectName] = useState('Custom Mailer Box')
+    const [viewMode, setViewMode] = useState('3d') // '3d' | '2d' | 'split'
+    const [textElements, setTextElements] = useState({})
 
     const [sideColors, setSideColors] = useState({
         lidFront: '#C7A882',
@@ -273,6 +276,7 @@ export default function AppContextProvider({ children }) {
         }
         setSelectedFeatureProduct(null);
         setExtTexImgBlob(null);
+        setProjectName(`Custom ${preset.name}`);
     }, []);
 
     return (
@@ -328,7 +332,13 @@ export default function AppContextProvider({ children }) {
                 activeBoxPreset,
                 setActiveBoxPreset,
                 selectBoxPreset,
-                BOX_PRESETS
+                BOX_PRESETS,
+                projectName,
+                setProjectName,
+                viewMode,
+                setViewMode,
+                textElements,
+                setTextElements
             }}
         >
             {children}

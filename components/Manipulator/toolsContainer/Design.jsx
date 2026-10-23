@@ -8,12 +8,17 @@ import DieMoldBlueprint from "../tools/DieMoldBlueprint";
 import { FaPaintbrush, FaRulerCombined } from "react-icons/fa6";
 import { getDieMoldSpec } from "@/lib/dieMoldSpecs";
 
-const Design = () => {
+const Design = ({ initialTab = "designer" }) => {
   const pathname = usePathname();
   const { setBox, box, activeBoxPreset, selectBoxPreset } = useAppContext();
-  const [activeTab, setActiveTab] = useState("designer"); // "designer" | "blueprint"
+  const [activeTab, setActiveTab] = useState(initialTab === "blueprint" ? "blueprint" : "designer");
 
   const spec = getDieMoldSpec(activeBoxPreset?.id);
+
+  useEffect(() => {
+    if (initialTab === "blueprint") setActiveTab("blueprint");
+    else setActiveTab("designer");
+  }, [initialTab]);
 
   useEffect(() => {
     const segment = pathname.substring(pathname.lastIndexOf('/') + 1);
@@ -72,7 +77,7 @@ const Design = () => {
       {activeTab === "blueprint" ? (
         <DieMoldBlueprint />
       ) : (
-        <UniversalDieNetContainer />
+        <UniversalDieNetContainer activeTool={initialTab === "text" ? "text" : undefined} />
       )}
     </div>
   );

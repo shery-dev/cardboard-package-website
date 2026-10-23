@@ -23,6 +23,21 @@ async function getBoxMaterialRates() {
 
 const MIN_QUANTITY = 500;
 
+export const VOLUME_DISCOUNTS = [
+    { qty: 500, discount: 0, label: 'Base' },
+    { qty: 1000, discount: 0.10, label: 'Save 10%' },
+    { qty: 2500, discount: 0.18, label: 'Save 18%' },
+    { qty: 5000, discount: 0.25, label: 'Save 25%' },
+];
+
+const getDiscountFactor = (q) => {
+    const numQ = Number(q) || 0;
+    if (numQ >= 5000) return 0.25;
+    if (numQ >= 2500) return 0.18;
+    if (numQ >= 1000) return 0.10;
+    return 0;
+};
+
 const MATERIAL_DESCRIPTIONS = {
     White: "Classic white cardboard with a refined matte finish.",
     Dreamcoat: "Classic dreamcoat cardboard with a refined matte finish.",
@@ -36,7 +51,7 @@ const ProductForm = ({ data }) => {
     const router = useRouter();
     const { material, quantity, setQuantity, selectedSize, setItemsList, viewType,
         imagePositions, imageSizes, imageRotations, images, extTexImg, sideColors, extTexImgBlob,
-        activeBoxPreset
+        activeBoxPreset, projectName, setProjectName
     } = useAppContext();
     const [rates, setRates] = useState(DEFAULT_RATES);
     const [dollarRate, setDollarRate] = useState(DEFAULT_DOLLAR_RATE);
@@ -51,7 +66,7 @@ const ProductForm = ({ data }) => {
         });
     }, []);
 
-    // Unit price = (Length × Width × Depth × material rate) / dollar rate
+    // Unit price = (Length × Width × Depth × material rate) / dollar rate with volume discount
     useEffect(() => {
         if (!selectedSize || !material) {
             setUnitPrice(0);
@@ -63,7 +78,9 @@ const ProductForm = ({ data }) => {
         const D = Number(selectedSize.depth) || 0;
         const rate = Number(rates[material]) ?? DEFAULT_RATES[material] ?? 100;
         const div = Number(dollarRate) || DEFAULT_DOLLAR_RATE;
-        const up = div > 0 ? (L * W * D * rate) / div : 0;
+        const baseUp = div > 0 ? (L * W * D * rate) / div : 0;
+        const discountFactor = getDiscountFactor(quantity);
+        const up = baseUp * (1 - discountFactor);
         setUnitPrice(up);
         const q = Number(quantity) || 0;
         setSubtotal(up * q);
@@ -111,7 +128,7 @@ const ProductForm = ({ data }) => {
             const item = {
                 id: data?._id ? `${data._id}-${Date.now()}` : `custom-${Date.now()}`,
                 ThreeD: true,
-                name: activeBoxPreset?.name || (viewType === 'main' ? 'Standard Mailer Box' : (data?.cardboardname || 'Custom Box')),
+                name: projectName || activeBoxPreset?.name || (viewType === 'main' ? 'Standard Mailer Box' : (data?.cardboardname || 'Custom Box')),
                 categoryPath: activeBoxPreset?.category || CATEGORY_PATH,
                 img: imgSrc,
                 quantity: Number(quantity),
@@ -136,7 +153,7 @@ const ProductForm = ({ data }) => {
     };
 
     const handleSaveDesign = async () => {
-        const designName = data?.cardboardname || 'Standard Mailer Box';
+        const designName = projectName || activeBoxPreset?.name || data?.cardboardname || 'Standard Mailer Box';
         const designData = {
             colour: sideColors || {},
             images: images || {},
@@ -214,24 +231,36 @@ const ProductForm = ({ data }) => {
 
                 {/* Volume Tiers Quick Selector (Packlane style) */}
                 <div>
-                    <label className="text-[11px] font-bold text-[#2B211B] uppercase tracking-wider block mb-1.5">
-                        Select Quantity
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-[11px] font-bold text-[#2B211B] uppercase tracking-wider block">
+                            Select Quantity
+                        </label>
+                        {getDiscountFactor(quantity) > 0 && (
+                            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                {Math.round(getDiscountFactor(quantity) * 100)}% Volume Savings
+                            </span>
+                        )}
+                    </div>
                     <div className="grid grid-cols-4 gap-1.5">
-                        {[500, 1000, 2500, 5000].map((qty) => {
+                        {VOLUME_DISCOUNTS.map(({ qty, discount, label }) => {
                             const isSelected = Number(quantity) === qty;
                             return (
                                 <button
                                     key={qty}
                                     type="button"
                                     onClick={() => setQuantity && setQuantity(qty)}
-                                    className={`py-1.5 px-1 rounded-md text-center transition-all border ${
+                                    className={`py-1.5 px-1 rounded-md text-center transition-all border flex flex-col items-center justify-center ${
                                         isSelected
                                             ? "bg-[#2B211B] text-[#FFFDFC] border-[#2B211B] shadow-xs font-bold"
                                             : "bg-[#FAF7F2] text-[#2B211B] border-[#DCCFC2] hover:border-[#2B211B] text-xs font-semibold"
                                     }`}
                                 >
-                                    <span className="block text-xs">{qty}</span>
+                                    <span className="block text-xs leading-none font-bold">{qty}</span>
+                                    <span className={`block text-[9px] mt-0.5 leading-none ${
+                                        isSelected ? "text-[#C7A882]" : discount > 0 ? "text-emerald-700 font-bold" : "text-[#6B584D]"
+                                    }`}>
+                                        {label}
+                                    </span>
                                 </button>
                             );
                         })}

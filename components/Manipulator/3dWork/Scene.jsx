@@ -16,9 +16,10 @@ import WebGLErrorBoundary from '../assets/WebGLErrorBoundary';
 
 
 
-const Scene = () => {
+const Scene = ({ isMiniPreview = false }) => {
 
-    const { isOpen, setIsOpen, selectedSide, box, activeItem, setActiveItem } = useAppContext()
+    const { isOpen, setIsOpen, selectedSide, box, activeItem, setActiveItem, viewMode, setViewMode } = useAppContext();
+    const isMini = isMiniPreview || viewMode === 'split';
     const cameraControlRef = useRef();
     const [canvasKey, setCanvasKey] = useState(0);
 
@@ -70,43 +71,73 @@ const Scene = () => {
     }, [selectedSide]);
 
     return (
-        <div className="relative w-full h-full min-h-[500px] flex flex-col rounded-xl overflow-hidden border border-[#DCCFC2] bg-gradient-to-b from-[#FAF7F2] via-[#F4EFEA] to-[#EAE3D9] shadow-xs">
-            {/* Top Viewport Floating Bar: Camera View Presets */}
-            <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-white/90 backdrop-blur-md px-2 py-1 rounded-lg border border-[#DCCFC2] shadow-xs text-xs font-semibold text-[#2B211B]">
-                <span className="text-[10px] uppercase tracking-wider text-[#6B584D] px-1 font-bold">View:</span>
-                <button
-                    type="button"
-                    onClick={() => setCameraView('iso')}
-                    className="px-2 py-1 rounded hover:bg-[#F7F3ED] transition-colors text-[11px]"
-                    title="Isometric 3D View"
-                >
-                    3D
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setCameraView('front')}
-                    className="px-2 py-1 rounded hover:bg-[#F7F3ED] transition-colors text-[11px]"
-                    title="Front View"
-                >
-                    Front
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setCameraView('top')}
-                    className="px-2 py-1 rounded hover:bg-[#F7F3ED] transition-colors text-[11px]"
-                    title="Top View"
-                >
-                    Top
-                </button>
-                <button
-                    type="button"
-                    onClick={() => setCameraView('side')}
-                    className="px-2 py-1 rounded hover:bg-[#F7F3ED] transition-colors text-[11px]"
-                    title="Side View"
-                >
-                    Side
-                </button>
-            </div>
+        <div className={`relative w-full h-full flex flex-col rounded-xl overflow-hidden border border-[#DCCFC2] bg-gradient-to-b from-[#FAF7F2] via-[#F4EFEA] to-[#EAE3D9] ${
+            isMini ? "min-h-0 shadow-lg" : "min-h-[500px] shadow-xs"
+        }`}>
+            {/* Top Viewport Floating Bar */}
+            {isMini ? (
+                <div className="absolute top-2 left-2 right-2 z-10 flex items-center justify-between bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-lg border border-[#DCCFC2] shadow-xs">
+                    <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-[11px] font-bold text-[#2B211B]">3D Live Dock</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                        <button
+                            type="button"
+                            onClick={() => setIsOpen((prev) => !prev)}
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                                isOpen ? "bg-[#A94F32] text-white" : "bg-[#2B211B] text-white"
+                            }`}
+                        >
+                            {isOpen ? "Open" : "Closed"}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setViewMode && setViewMode('3d')}
+                            className="bg-[#FAF7F2] hover:bg-[#F2ECE4] text-[#2B211B] px-2 py-0.5 rounded text-[10px] font-bold border border-[#DCCFC2] transition-colors"
+                            title="Expand to Full 3D View"
+                        >
+                            ↗ Full 3D
+                        </button>
+                    </div>
+                </div>
+            ) : (
+                <div className="absolute top-3 right-3 z-10 flex items-center gap-1 bg-white/90 backdrop-blur-md px-2 py-1 rounded-lg border border-[#DCCFC2] shadow-xs text-xs font-semibold text-[#2B211B]">
+                    <span className="text-[10px] uppercase tracking-wider text-[#6B584D] px-1 font-bold">View:</span>
+                    <button
+                        type="button"
+                        onClick={() => setCameraView('iso')}
+                        className="px-2 py-1 rounded hover:bg-[#F7F3ED] transition-colors text-[11px]"
+                        title="Isometric 3D View"
+                    >
+                        3D
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setCameraView('front')}
+                        className="px-2 py-1 rounded hover:bg-[#F7F3ED] transition-colors text-[11px]"
+                        title="Front View"
+                    >
+                        Front
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setCameraView('top')}
+                        className="px-2 py-1 rounded hover:bg-[#F7F3ED] transition-colors text-[11px]"
+                        title="Top View"
+                    >
+                        Top
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setCameraView('side')}
+                        className="px-2 py-1 rounded hover:bg-[#F7F3ED] transition-colors text-[11px]"
+                        title="Side View"
+                    >
+                        Side
+                    </button>
+                </div>
+            )}
 
             {/* 3D Canvas Container */}
             <div className="w-full flex-1 min-h-0 relative">
@@ -177,42 +208,80 @@ const Scene = () => {
                 </WebGLErrorBoundary>
             </div>
 
-            {/* Bottom Floating Packlane HUD: Lid State & 2D/3D Switcher */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3 bg-white/95 backdrop-blur-md px-4 py-2 rounded-full border border-[#DCCFC2] shadow-md">
-                {/* Packlane-Style Lid State Pill */}
-                <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold text-[#6B584D] uppercase tracking-wider">Lid:</span>
-                    <button
-                        type="button"
-                        onClick={() => setIsOpen((prev) => !prev)}
-                        className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all ${
-                            isOpen
-                                ? "bg-[#A94F32] text-white shadow-xs"
-                                : "bg-[#2B211B] text-[#FFFDFC] shadow-xs"
-                        }`}
-                    >
-                        <span>{isOpen ? "Open" : "Closed"}</span>
-                    </button>
-                </div>
+            {/* Bottom Floating Packlane HUD: Lid State & Studio View Switcher */}
+            {!isMini && (
+                <>
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2.5 bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-[#DCCFC2] shadow-md">
+                        {/* Lid State Toggle */}
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-[11px] font-bold text-[#6B584D] uppercase tracking-wider">Lid:</span>
+                            <button
+                                type="button"
+                                onClick={() => setIsOpen((prev) => !prev)}
+                                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
+                                    isOpen
+                                        ? "bg-[#A94F32] text-white shadow-xs"
+                                        : "bg-[#2B211B] text-[#FFFDFC] shadow-xs"
+                                }`}
+                            >
+                                <span>{isOpen ? "Open" : "Closed"}</span>
+                            </button>
+                        </div>
 
-                <div className="w-[1px] h-5 bg-[#DCCFC2]" />
+                        <div className="w-[1px] h-4 bg-[#DCCFC2]" />
 
-                {/* Switch to 2D Net / 3D Box Toggle */}
-                <button
-                    type="button"
-                    onClick={() => setActiveItem(activeItem === 'design' ? 'boxtype' : 'design')}
-                    className="text-xs font-bold text-[#2B211B] hover:text-[#A94F32] transition-colors flex items-center gap-1.5"
-                >
-                    <span>{activeItem === 'design' ? "Close 2D Net" : "Edit 2D Net"}</span>
-                </button>
-            </div>
+                        {/* Packlane Studio 3-Way Mode Switcher */}
+                        <div className="flex items-center gap-1 bg-[#FAF7F2] p-0.5 rounded-full border border-[#DCCFC2]/60">
+                            <button
+                                type="button"
+                                onClick={() => setViewMode && setViewMode('3d')}
+                                className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
+                                    viewMode === '3d'
+                                        ? "bg-[#2B211B] text-[#FFFDFC] shadow-xs"
+                                        : "text-[#6B584D] hover:text-[#2B211B]"
+                                }`}
+                            >
+                                3D Box
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (setViewMode) setViewMode('2d');
+                                    if (setActiveItem) setActiveItem('design');
+                                }}
+                                className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
+                                    viewMode === '2d'
+                                        ? "bg-[#2B211B] text-[#FFFDFC] shadow-xs"
+                                        : "text-[#6B584D] hover:text-[#2B211B]"
+                                }`}
+                            >
+                                2D Net
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (setViewMode) setViewMode('split');
+                                    if (setActiveItem) setActiveItem('design');
+                                }}
+                                className={`px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
+                                    viewMode === 'split'
+                                        ? "bg-[#2B211B] text-[#FFFDFC] shadow-xs"
+                                        : "text-[#6B584D] hover:text-[#2B211B]"
+                                }`}
+                            >
+                                Split View
+                            </button>
+                        </div>
+                    </div>
 
-            {/* Bottom Left Subtle Interaction Guide */}
-            <div className="absolute bottom-3 left-3 z-10 pointer-events-none hidden sm:block">
-                <span className="text-[10px] text-[#6B584D] font-medium bg-white/70 backdrop-blur-xs px-2 py-1 rounded-md border border-[#DCCFC2]/60">
-                    Drag to rotate • Scroll to zoom
-                </span>
-            </div>
+                    {/* Bottom Left Subtle Interaction Guide */}
+                    <div className="absolute bottom-3 left-3 z-10 pointer-events-none hidden sm:block">
+                        <span className="text-[10px] text-[#6B584D] font-medium bg-white/70 backdrop-blur-xs px-2 py-1 rounded-md border border-[#DCCFC2]/60">
+                            Drag to rotate • Scroll to zoom
+                        </span>
+                    </div>
+                </>
+            )}
         </div>
     );
 };

@@ -52,7 +52,13 @@ const ToolsOptionsContainer = ({ data }) => {
                 activeItem === "material" && <Materials />
             }
             {
-                activeItem === 'design' && <Design />
+                activeItem === 'design' && <Design initialTab="designer" />
+            }
+            {
+                activeItem === 'text' && <Design initialTab="text" />
+            }
+            {
+                activeItem === 'blueprint' && <Design initialTab="blueprint" />
             }
             {
                 activeItem === 'quantity' && <Quantity />

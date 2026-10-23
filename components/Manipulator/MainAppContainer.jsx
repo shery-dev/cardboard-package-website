@@ -4,8 +4,10 @@ import { useAppContext } from "@/context/Context";
 import ProductForm from "./ProductForm";
 import ToolsOptionsContainer from "./ToolsOptionsContainer";
 import SideBar3D from "./SideBar3D";
+import UniversalDieNetContainer from "./assets/UniversalDieNetContainer";
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { FaCube, FaPenRuler, FaTableColumns, FaPen } from "react-icons/fa6";
 
 async function getData() {
     try {
@@ -52,7 +54,11 @@ const MainAppContainer = ({ children }) => {
         selectBoxPreset,
         selectedSize,
         material,
-        activeBoxPreset
+        activeBoxPreset,
+        viewMode,
+        setViewMode,
+        projectName,
+        setProjectName
     } = useAppContext();
     const [data, setData] = useState('');
     const [subProdData, setSubProdData] = useState(null);
@@ -153,18 +159,23 @@ const MainAppContainer = ({ children }) => {
         <div ref={mainDivRef} className="w-full h-full flex flex-col overflow-hidden bg-[#FAF7F2]">
             {/* Packlane-Style Top Header Bar */}
             <header className="w-full shrink-0 h-13 px-4 bg-white border-b border-[#DCCFC2] flex items-center justify-between shadow-2xs z-20">
-                {/* Left: Active Box Model & Dimensions Pill */}
+                {/* Left: Editable Project Title & Specs */}
                 <div className="flex items-center gap-2.5">
                     <div>
-                        <div className="flex items-center gap-2">
-                            <h1 className="text-sm font-bold text-[#2B211B] leading-none">
-                                {activeBoxPreset?.name || 'Standard Mailer Box'}
-                            </h1>
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#A94F32] bg-[#A94F32]/10 px-1.5 py-0.5 rounded">
+                        <div className="flex items-center gap-1.5">
+                            <input
+                                type="text"
+                                value={projectName !== undefined && projectName !== '' ? projectName : (activeBoxPreset?.name || 'Custom Box')}
+                                onChange={(e) => setProjectName && setProjectName(e.target.value)}
+                                className="text-sm font-bold text-[#2B211B] bg-transparent hover:bg-[#FAF7F2] focus:bg-white focus:ring-1 focus:ring-[#A94F32] rounded px-1 -ml-1 border border-transparent focus:border-[#DCCFC2] outline-none max-w-[220px] transition-colors truncate"
+                                title="Click to rename project"
+                            />
+                            <FaPen className="text-[10px] text-[#6B584D]/40" />
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#A94F32] bg-[#A94F32]/10 px-1.5 py-0.5 rounded ml-1">
                                 {activeBoxPreset?.category || 'Custom Box'}
                             </span>
                         </div>
-                        <div className="flex items-center gap-2 mt-1 text-[11px] text-[#6B584D]">
+                        <div className="flex items-center gap-2 mt-0.5 text-[11px] text-[#6B584D]">
                             <span className="font-semibold text-[#2B211B]">
                                 {selectedSize ? `${selectedSize.length}″ × ${selectedSize.width}″ × ${selectedSize.depth}″` : '10″ × 10″ × 4″'}
                             </span>
@@ -175,7 +186,7 @@ const MainAppContainer = ({ children }) => {
                 </div>
 
                 {/* Center: 3-Step Packlane Workflow Stepper */}
-                <nav aria-label="Customizer Steps" className="hidden md:flex items-center gap-2">
+                <nav aria-label="Customizer Steps" className="hidden lg:flex items-center gap-2">
                     <button
                         type="button"
                         onClick={() => setActiveItem('size')}
@@ -220,8 +231,57 @@ const MainAppContainer = ({ children }) => {
                     </button>
                 </nav>
 
-                {/* Right: Quick Navigation Step Buttons */}
-                <div className="flex items-center gap-2">
+                {/* Right: Studio Mode Switcher + Step Navigation */}
+                <div className="flex items-center gap-2.5">
+                    {/* Packlane Studio 3-Way Mode Switcher */}
+                    <div className="flex items-center gap-0.5 bg-[#FAF7F2] p-1 rounded-lg border border-[#DCCFC2]">
+                        <button
+                            type="button"
+                            onClick={() => setViewMode && setViewMode('3d')}
+                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-all ${
+                                viewMode === '3d'
+                                    ? "bg-[#2B211B] text-[#FFFDFC] shadow-xs"
+                                    : "text-[#6B584D] hover:text-[#2B211B]"
+                            }`}
+                            title="Full 3D Box Model"
+                        >
+                            <FaCube className="text-[11px]" />
+                            <span className="hidden sm:inline">3D</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (setViewMode) setViewMode('2d');
+                                if (setActiveItem) setActiveItem('design');
+                            }}
+                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-all ${
+                                viewMode === '2d'
+                                    ? "bg-[#2B211B] text-[#FFFDFC] shadow-xs"
+                                    : "text-[#6B584D] hover:text-[#2B211B]"
+                            }`}
+                            title="2D CAD Die Net"
+                        >
+                            <FaPenRuler className="text-[11px]" />
+                            <span className="hidden sm:inline">2D Net</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (setViewMode) setViewMode('split');
+                                if (setActiveItem) setActiveItem('design');
+                            }}
+                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold transition-all ${
+                                viewMode === 'split'
+                                    ? "bg-[#2B211B] text-[#FFFDFC] shadow-xs"
+                                    : "text-[#6B584D] hover:text-[#2B211B]"
+                            }`}
+                            title="Split View: 2D Net with Live 3D Dock"
+                        >
+                            <FaTableColumns className="text-[11px]" />
+                            <span className="hidden sm:inline">Split</span>
+                        </button>
+                    </div>
+
                     {currentStep < 3 ? (
                         <button
                             type="button"
@@ -242,7 +302,7 @@ const MainAppContainer = ({ children }) => {
                 </div>
             </header>
 
-            {/* Packlane Workspace: Left Dock, Active Tool Drawer, Center 3D Canvas, Right Summary */}
+            {/* Packlane Workspace: Left Dock, Active Tool Drawer, Center Studio Canvas, Right Summary */}
             <div className="w-full flex-1 min-h-0 flex overflow-hidden p-2 gap-2">
                 {/* Left Tool Rail (64px) */}
                 <div className="w-16 shrink-0 h-full rounded-xl overflow-hidden shadow-xs">
@@ -256,9 +316,31 @@ const MainAppContainer = ({ children }) => {
                     <ToolsOptionsContainer data={data} />
                 </div>
 
-                {/* Center 3D Studio Viewport */}
-                <div className="flex-1 min-w-0 h-full">
-                    {children}
+                {/* Center Studio Viewport (Packlane Responsive Canvas) */}
+                <div className="flex-1 min-w-0 h-full relative overflow-hidden rounded-xl border border-[#DCCFC2] bg-white">
+                    {/* 2D Flat CAD Net (Active in '2d' and 'split' modes) */}
+                    {(viewMode === '2d' || viewMode === 'split') && (
+                        <div className="w-full h-full">
+                            <UniversalDieNetContainer isFullCanvas={true} />
+                        </div>
+                    )}
+
+                    {/* 3D Box Model Viewport:
+                        - In '3d' mode: full center stage
+                        - In 'split' mode: floating corner dock (Packlane signature #tdIframe style)
+                        - In '2d' mode: visually hidden (preserves WebGL context without re-instantiation)
+                    */}
+                    <div
+                        className={
+                            viewMode === '3d'
+                                ? "w-full h-full"
+                                : viewMode === 'split'
+                                ? "absolute top-3 right-3 w-[300px] h-[230px] rounded-xl overflow-hidden border-2 border-[#2B211B]/20 shadow-2xl z-30 transition-all hover:scale-[1.02] bg-white"
+                                : "hidden"
+                        }
+                    >
+                        {children}
+                    </div>
                 </div>
 
                 {/* Right Order Summary & Pricing Sidebar */}

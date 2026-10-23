@@ -2,9 +2,63 @@
 
 ## Latest session
 
-**Date:** 2026-10-22  
-**Scope:** Fix 3D box side-focus camera navigation and material color pipeline across all 17 box models.  
-**Implementation status:** Fully verified. Production build (`npm run build`) generates 57/57 routes with 0 errors. Local dev server running smoothly on port 3000.
+**Date:** 2026-10-23  
+**Scope:** Packlane Customizer Architecture & Feature Set Integration + Standalone Packlane Local Server.  
+**Implementation status:** Fully verified. Next.js customizer (`http://localhost:3000/customTool`) and Packlane local server (`http://localhost:3005/`) running concurrently with HTTP 200 responses.
+
+## Completed
+
+- **Standalone Packlane Extracted Tool Deployed Locally (`http://localhost:3005`):**
+  - Added npm script `"packlane": "node editor.packlane.com/deploy-local.js"` to `package.json`.
+  - Configured port 3005 default in `editor.packlane.com/deploy-local.js` to run alongside Next.js on port 3000.
+  - Copied vector `packlane-logo.svg` to `public/packlane-logo.svg`.
+  - Verified local server serves `personalize.html` with HTTP 200 OK.
+- **Packlane Customizer Feature Set Integration (`/customTool`):**
+  - **Packlane Studio Dual / Split Viewport Mode:**
+    - Integrated 3 primary studio viewport states: `3D Box` (full WebGL model), `2D Net` (full-canvas interactive flat CAD net), and Packlane signature `Split View` (2D Net editing on the main canvas with a live, floating 3D dock preview in the upper-right corner).
+    - Preserved WebGL context state seamlessly when toggling between 2D, 3D, and Split modes without reloading or flickering.
+    - Added floating 3D dock controls: pulsing live indicator, lid state toggle, and 1-click `↗ Full 3D` expansion.
+  - **Editable Project Title & Packlane Topbar:**
+    - Added inline editable project name input (`projectName`) with edit affordances.
+    - Connected project name to cart line items and saved custom designs.
+    - Integrated 3-step workflow stepper (`1. Size & Material` → `2. Design & Artwork` → `3. Quantity & Pricing`).
+    - Added Studio Mode switcher (`3D`, `2D Net`, `Split`) in top header.
+  - **Packaging Typography Tool (`UniversalDieNetContainer.jsx`):**
+    - Built interactive text creation tool supporting DM Sans, Newsreader, Impact, Courier, and Arial.
+    - Added font size stepper (10–60px), font color picker, bold/italic formatting, rotation, and drag-and-drop placement onto the 2D CAD dieline net.
+    - Synchronized custom typography onto 3D packaging textures via `convertSvgToJpg()` while stripping technical CAD dimension annotations.
+  - **CAD Vector Dieline Export:**
+    - Added `.svg` vector dieline export downloading exact parametric cutting, creasing, and bleed lines (`{presetId}-{dims}-packlane-dieline.svg`).
+  - **Volume Tier Pricing Matrix (`ProductForm.jsx`):**
+    - Added volume discount tier calculation (500 = base rate, 1000 = 10% off, 2500 = 18% off, 5000 = 25% off) with savings badges.
+  - **Tool Rail Alignment (`SideBar3D.jsx` & `ToolsOptionsContainer.jsx`):**
+    - Aligned tool rail with Packlane features: Box Style, Sizing, Material, 2D Net, Typography, Tailored Brands, CAD Blueprint, and Quantity & Pricing.
+
+## Files changed
+
+- `package.json`
+- `context/Context.jsx`
+- `components/Manipulator/SideBar3D.jsx`
+- `components/Manipulator/ToolsOptionsContainer.jsx`
+- `components/Manipulator/MainAppContainer.jsx`
+- `components/Manipulator/3dWork/Scene.jsx`
+- `components/Manipulator/ProductForm.jsx`
+- `components/Manipulator/assets/UniversalDieNetContainer.jsx`
+- `components/Manipulator/toolsContainer/Design.jsx`
+- `editor.packlane.com/deploy-local.js`
+- `docs/ai-context/TASKS.md`
+- `docs/ai-context/SESSION_HANDOFF.md`
+
+## Verification
+
+- `http://localhost:3000/customTool`: HTTP 200 OK.
+- `http://localhost:3000/customTool?preset=rationBox`: HTTP 200 OK across all 17 box presets.
+- `http://localhost:3005/`: HTTP 200 OK serving the extracted Packlane customizer standalone.
+- View switcher (`3D`, `2D Net`, `Split`), typography tool, volume tier pricing, and SVG dieline export verified.
+
+## Next steps
+
+- Test user interactions in browser across custom typography placement, split-view real-time texture sync, and cart persistence.
 
 ## Completed
 
