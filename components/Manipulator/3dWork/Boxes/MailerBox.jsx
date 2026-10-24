@@ -101,7 +101,9 @@ export function MailerBox(props) {
 
   const appliedColorHex = isFeatureShowcase
     ? '#FFFFFF'
-    : (customColor || extTexColor || materialBaseColor);
+    : (extTexImgBlob
+      ? '#FFFFFF'
+      : (customColor || extTexColor || materialBaseColor));
 
   const hasCustomColor = !isFeatureShowcase && appliedColorHex && appliedColorHex.toUpperCase() !== '#C7A882' && appliedColorHex.toUpperCase() !== '#FAF5EE';
 
@@ -122,10 +124,14 @@ export function MailerBox(props) {
 
   useEffect(() => {
     if (extMaterialRef.current) {
+      if (extTex?.map) {
+        extMaterialRef.current.map = extTex.map;
+        extMaterialRef.current.map.needsUpdate = true;
+      }
       extMaterialRef.current.color = new THREE.Color(appliedColorHex);
       extMaterialRef.current.needsUpdate = true;
     }
-  }, [appliedColorHex]);
+  }, [appliedColorHex, extTex.map]);
 
   const [matObject, setMatObject] = useState({
     map: '/pizzaIntTexKraft.png',

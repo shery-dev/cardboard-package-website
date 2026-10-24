@@ -94,7 +94,7 @@ export function CakeBox(props) {
 
   const extTexMapUrl = isFeatureShowcase
     ? (generatedFeatureTexUrl || defaultExtTex)
-    : defaultExtTex;
+    : (extTexImgBlob || defaultExtTex);
 
   const extTex = useTexture({ map: extTexMapUrl });
 
@@ -134,35 +134,41 @@ export function CakeBox(props) {
   const customLidColor =
     (sideColors?.top && sideColors.top.toUpperCase() !== '#C7A882' ? sideColors.top : null) ||
     (sideColors?.lidFront && sideColors.lidFront.toUpperCase() !== '#C7A882' ? sideColors.lidFront : null) ||
-    (sideColors?.lid && sideColors.lid.toUpperCase() !== '#C7A882' ? sideColors.lid : null) ||
-    (extTexColor && extTexColor.toUpperCase() !== '#C7A882' && extTexColor.toUpperCase() !== '#FAF5EE' ? extTexColor : null);
+    (sideColors?.lid && sideColors.lid.toUpperCase() !== '#C7A882' ? sideColors.lid : null);
 
   const customBodyColor =
     (sideColors?.front && sideColors.front.toUpperCase() !== '#C7A882' ? sideColors.front : null) ||
     (sideColors?.bottom && sideColors.bottom.toUpperCase() !== '#C7A882' ? sideColors.bottom : null) ||
     (sideColors?.back && sideColors.back.toUpperCase() !== '#C7A882' ? sideColors.back : null) ||
     (sideColors?.left && sideColors.left.toUpperCase() !== '#C7A882' ? sideColors.left : null) ||
-    (sideColors?.right && sideColors.right.toUpperCase() !== '#C7A882' ? sideColors.right : null) ||
-    (extTexColor && extTexColor.toUpperCase() !== '#C7A882' && extTexColor.toUpperCase() !== '#FAF5EE' ? extTexColor : null);
+    (sideColors?.right && sideColors.right.toUpperCase() !== '#C7A882' ? sideColors.right : null);
 
-  const lidColorHex = isFeatureShowcase ? '#FFFFFF' : (customLidColor || extTexColor || materialBaseColor);
-  const bodyColorHex = isFeatureShowcase ? '#FFFFFF' : (customBodyColor || extTexColor || materialBaseColor);
+  const lidColorHex = isFeatureShowcase ? '#FFFFFF' : (extTexImgBlob ? '#FFFFFF' : (customLidColor || extTexColor || materialBaseColor));
+  const bodyColorHex = isFeatureShowcase ? '#FFFFFF' : (extTexImgBlob ? '#FFFFFF' : (customBodyColor || extTexColor || materialBaseColor));
   const bodyMatRef = useRef();
   const lidMatRef = useRef();
 
   useEffect(() => {
     if (bodyMatRef.current) {
+      if (extTex?.map) {
+        bodyMatRef.current.map = extTex.map;
+        bodyMatRef.current.map.needsUpdate = true;
+      }
       bodyMatRef.current.color = new THREE.Color(bodyColorHex);
       bodyMatRef.current.needsUpdate = true;
     }
-  }, [bodyColorHex]);
+  }, [bodyColorHex, extTex.map]);
 
   useEffect(() => {
     if (lidMatRef.current) {
+      if (extTex?.map) {
+        lidMatRef.current.map = extTex.map;
+        lidMatRef.current.map.needsUpdate = true;
+      }
       lidMatRef.current.color = new THREE.Color(lidColorHex);
       lidMatRef.current.needsUpdate = true;
     }
-  }, [lidColorHex]);
+  }, [lidColorHex, extTex.map]);
 
   return (
     <group

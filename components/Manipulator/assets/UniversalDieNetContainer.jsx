@@ -115,6 +115,8 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
 
     // Clone SVG and hide technical text/measurements while preserving user typography
     const clonedSvg = svgElement.cloneNode(true);
+    clonedSvg.setAttribute('width', String(exportWidth));
+    clonedSvg.setAttribute('height', String(exportHeight));
     clonedSvg.querySelectorAll('text:not(.user-custom-text)').forEach((t) => (t.style.display = 'none'));
     clonedSvg.querySelectorAll('line').forEach((l) => (l.style.display = 'none'));
 
@@ -124,6 +126,7 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
 
     const img = new Image();
     img.onload = () => {
+      ctx.clearRect(0, 0, exportWidth, exportHeight);
       ctx.fillStyle = extTexColor || '#C7A882';
       ctx.fillRect(0, 0, exportWidth, exportHeight);
       ctx.drawImage(img, 0, 0, exportWidth, exportHeight);
@@ -140,10 +143,8 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
 
   const applyDesignTo3D = () => {
     setApplied(true);
-    // Only rasterize 2D SVG canvas into 3D image blob if user has uploaded custom artwork or added text
-    if (Object.keys(images || {}).length > 0 || Object.keys(textElements || {}).length > 0) {
-      convertSvgToJpg();
-    }
+    // Always rasterize 2D SVG canvas into 3D image blob so multi-colored panels, images, and text all project directly to 3D
+    convertSvgToJpg();
     setTimeout(() => setApplied(false), 800);
   };
 
@@ -170,7 +171,7 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
     }
   };
 
-  // Explicit user color pick for the active panel or whole box
+  // Explicit user color pick for the active panel (supports multi-color panel designs)
   const handleColorPick = (color) => {
     const targetSection = selectedSection || 'top';
     if (!selectedSection) setSelectedSection('top');
@@ -180,8 +181,9 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
         [targetSection]: color,
       }));
     }
-    if (setExtTexColor) setExtTexColor(color);
     if (setSelectedColor) setSelectedColor(color);
+    // Regenerate 3D texture blob with the updated panel colors
+    setTimeout(() => convertSvgToJpg(), 80);
   };
 
   // Apply color to all faces of the box at once
@@ -212,6 +214,8 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
         return next;
       });
     }
+    // Regenerate 3D texture blob with the uniform color across all panels
+    setTimeout(() => convertSvgToJpg(), 80);
   };
 
   const handleResetPanelColor = () => {
@@ -223,6 +227,7 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
         [selectedSection]: defaultColor,
       }));
     }
+    setTimeout(() => convertSvgToJpg(), 80);
   };
 
   // Image Upload handler

@@ -81,7 +81,9 @@ export function PizzaBox(props) {
 
   const appliedColorHex = isFeatureShowcase
     ? '#FFFFFF'
-    : (customColor || extTexColor || materialBaseColor);
+    : (extTexImgBlob
+      ? '#FFFFFF'
+      : (customColor || extTexColor || materialBaseColor));
 
   const defaultExtTex = material === 'White'
     ? '/whiteCoatTexture.jpg'
@@ -93,7 +95,7 @@ export function PizzaBox(props) {
 
   const extTexMapUrl = isFeatureShowcase
     ? (generatedFeatureTexUrl || defaultExtTex)
-    : (hasCustomColor ? '/whiteCoatTexture.jpg' : (extTexImgBlob || defaultExtTex || '/pizzaBoxExtTex-kraft.png'));
+    : (extTexImgBlob || (hasCustomColor ? '/whiteCoatTexture.jpg' : (defaultExtTex || '/pizzaBoxExtTex-kraft.png')));
 
   const extTex = useTexture({ map: extTexMapUrl });
 

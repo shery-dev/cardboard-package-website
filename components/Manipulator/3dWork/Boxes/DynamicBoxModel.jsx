@@ -97,10 +97,10 @@ export function DynamicBoxModel({
     ? '/dreamCoatTexture.jpg'
     : '/whiteCoatTexture.jpg';
 
-  // For 3D GLTF models, use clean paper texture grain (do not map flat 2D die net cross SVG onto 3D GLB UVs)
+  // For 3D GLTF models, support extTexImgBlob for custom artwork/colors or default to clean paper texture
   const extTexMapUrl = isFeatureShowcase
     ? (generatedFeatureTexUrl || defaultExtTex)
-    : defaultExtTex;
+    : (extTexImgBlob || defaultExtTex);
 
   const extTex = useTexture({ map: extTexMapUrl });
   const { scene } = useGLTF(glbPath);
@@ -201,20 +201,20 @@ export function DynamicBoxModel({
           (sideColors?.top && sideColors.top.toUpperCase() !== '#C7A882' ? sideColors.top : null) ||
           (sideColors?.lidFront && sideColors.lidFront.toUpperCase() !== '#C7A882' ? sideColors.lidFront : null) ||
           (sideColors?.lid && sideColors.lid.toUpperCase() !== '#C7A882' ? sideColors.lid : null) ||
-          (sideColors?.lidTop && sideColors.lidTop.toUpperCase() !== '#C7A882' ? sideColors.lidTop : null) ||
-          (extTexColor && extTexColor.toUpperCase() !== '#C7A882' && extTexColor.toUpperCase() !== '#FAF5EE' ? extTexColor : null);
+          (sideColors?.lidTop && sideColors.lidTop.toUpperCase() !== '#C7A882' ? sideColors.lidTop : null);
 
         const customBodyColor =
           (sideColors?.front && sideColors.front.toUpperCase() !== '#C7A882' ? sideColors.front : null) ||
           (sideColors?.bottom && sideColors.bottom.toUpperCase() !== '#C7A882' ? sideColors.bottom : null) ||
           (sideColors?.back && sideColors.back.toUpperCase() !== '#C7A882' ? sideColors.back : null) ||
           (sideColors?.left && sideColors.left.toUpperCase() !== '#C7A882' ? sideColors.left : null) ||
-          (sideColors?.right && sideColors.right.toUpperCase() !== '#C7A882' ? sideColors.right : null) ||
-          (extTexColor && extTexColor.toUpperCase() !== '#C7A882' && extTexColor.toUpperCase() !== '#FAF5EE' ? extTexColor : null);
+          (sideColors?.right && sideColors.right.toUpperCase() !== '#C7A882' ? sideColors.right : null);
 
         const appliedColorHex = isFeatureShowcase
           ? '#FFFFFF'
-          : (isLid ? (customLidColor || extTexColor || materialBaseColor) : (customBodyColor || extTexColor || materialBaseColor));
+          : (extTexImgBlob
+            ? '#FFFFFF'
+            : (isLid ? (customLidColor || extTexColor || materialBaseColor) : (customBodyColor || extTexColor || materialBaseColor)));
 
         child.material = new THREE.MeshStandardMaterial({
           map: extTex.map,

@@ -8,6 +8,17 @@
 
 ## Completed
 
+- **Multi-Color Panel Application Across All 17 Geometries:**
+  - Fixed bug where choosing different colors on separate panels (e.g. Blue top cover lid, Red bottom base tray, Black left flap, Green right flap) was collapsed into a single overall color.
+  - In `UniversalDieNetContainer.jsx`:
+    - Updated `handleColorPick` to update `sideColors[targetSection]` without clobbering the whole-box color.
+    - Set `clonedSvg.setAttribute('width', '2048')` and `height: '2048'` and automatically triggered `convertSvgToJpg()` with a debounce whenever any panel color is picked.
+    - Removed restrictive condition in `applyDesignTo3D` so panel colors immediately rasterize to `extTexImgBlob`.
+  - In `MailerBox.jsx`, `ShippingBox.jsx`, and `PizzaBox.jsx`:
+    - Set `appliedColorHex = '#FFFFFF'` whenever `extTexImgBlob` is present, allowing Three.js to display all distinct panel colors from the texture map with 100% fidelity rather than multiplying by a single solid tint.
+    - Added reactive texture map and color updates in `useEffect([appliedColorHex, extTex.map])`.
+  - In `DynamicBoxModel.jsx`, `CakeBox.jsx`, and `PizzaSliceBox.jsx`:
+    - Decoupled `customLidColor` and `customBodyColor` from single-color overrides so lid and body retain independent colors.
 - **Fixed Standard Mailer Box 3D Color Pipeline:**
   - Resolved bug in `MailerBox.jsx` where `appliedColorHex` was statically trapped by the initial context value of `extTexColor` (`#C7A882`), shadowing `sideColors` and custom selections.
   - Prioritized custom panel colors (`sideColors?.top`, `sideColors?.lidFront`, `sideColors?.front`, etc.) and explicit box colors over material fallbacks.

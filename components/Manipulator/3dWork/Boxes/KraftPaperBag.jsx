@@ -94,7 +94,7 @@ export function KraftPaperBag(props) {
 
   const extTexMapUrl = isFeatureShowcase
     ? (generatedFeatureTexUrl || defaultExtTex)
-    : defaultExtTex;
+    : (extTexImgBlob || defaultExtTex);
 
   const extTex = useTexture({ map: extTexMapUrl });
 
@@ -123,15 +123,19 @@ export function KraftPaperBag(props) {
     (sideColors?.front && sideColors.front.toUpperCase() !== '#C7A882' ? sideColors.front : null) ||
     (sideColors?.top && sideColors.top.toUpperCase() !== '#C7A882' ? sideColors.top : null);
 
-  const bagColorHex = isFeatureShowcase ? '#FFFFFF' : (customColor || extTexColor || materialBaseColor);
+  const bagColorHex = isFeatureShowcase ? '#FFFFFF' : (extTexImgBlob ? '#FFFFFF' : (customColor || extTexColor || materialBaseColor));
   const bagMaterialRef = useRef();
 
   useEffect(() => {
     if (bagMaterialRef.current) {
+      if (extTex?.map) {
+        bagMaterialRef.current.map = extTex.map;
+        bagMaterialRef.current.map.needsUpdate = true;
+      }
       bagMaterialRef.current.color = new THREE.Color(bagColorHex);
       bagMaterialRef.current.needsUpdate = true;
     }
-  }, [bagColorHex]);
+  }, [bagColorHex, extTex.map]);
 
   return (
     <group

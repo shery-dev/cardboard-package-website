@@ -112,7 +112,9 @@ export function ShippingBox(props) {
 
   const appliedColorHex = isFeatureShowcase
     ? '#FFFFFF'
-    : (customColor || extTexColor || materialBaseColor);
+    : (extTexImgBlob
+      ? '#FFFFFF'
+      : (customColor || extTexColor || materialBaseColor));
   const hasCustomColor = !isFeatureShowcase && appliedColorHex && appliedColorHex.toUpperCase() !== '#C7A882';
 
   const defaultExtTex = material === 'White'
@@ -121,17 +123,21 @@ export function ShippingBox(props) {
 
   const extTexMapUrl = isFeatureShowcase
     ? (generatedFeatureTexUrl || defaultExtTex)
-    : (hasCustomColor ? '/whiteCoatTexture.jpg' : (extTexImgBlob || defaultExtTex));
+    : (extTexImgBlob || (hasCustomColor ? '/whiteCoatTexture.jpg' : defaultExtTex));
 
   const extTex = useTexture({ map: extTexMapUrl });
   const extMaterialRef = useRef();
 
   useEffect(() => {
     if (extMaterialRef.current) {
+      if (extTex?.map) {
+        extMaterialRef.current.map = extTex.map;
+        extMaterialRef.current.map.needsUpdate = true;
+      }
       extMaterialRef.current.color = new THREE.Color(appliedColorHex);
       extMaterialRef.current.needsUpdate = true;
     }
-  }, [appliedColorHex]);
+  }, [appliedColorHex, extTex.map]);
 
   const [matObject, setMatObject] = useState({
     map: '/shippingIntTexKraft.png',
