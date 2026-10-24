@@ -71,8 +71,17 @@ export function PizzaBox(props) {
     };
   }, []);
 
-  const defaultBaseColor = material === 'White' ? '#FFFFFF' : (material === 'Dreamcoat' ? '#FAF5EE' : '#C7A882');
-  const appliedColorHex = isFeatureShowcase ? '#FFFFFF' : (extTexColor || sideColors?.top || sideColors?.front || defaultBaseColor);
+  const materialBaseColor = material === 'White' ? '#FFFFFF' : (material === 'Dreamcoat' ? '#FAF5EE' : '#C7A882');
+  const customColor =
+    (extTexColor && extTexColor.toUpperCase() !== '#C7A882' && extTexColor.toUpperCase() !== '#FAF5EE' ? extTexColor : null) ||
+    (sideColors?.lidTop && sideColors.lidTop.toUpperCase() !== '#C7A882' ? sideColors.lidTop : null) ||
+    (sideColors?.top && sideColors.top.toUpperCase() !== '#C7A882' ? sideColors.top : null) ||
+    (sideColors?.bottom && sideColors.bottom.toUpperCase() !== '#C7A882' ? sideColors.bottom : null) ||
+    (sideColors?.front && sideColors.front.toUpperCase() !== '#C7A882' ? sideColors.front : null);
+
+  const appliedColorHex = isFeatureShowcase
+    ? '#FFFFFF'
+    : (customColor || extTexColor || materialBaseColor);
 
   const defaultExtTex = material === 'White'
     ? '/whiteCoatTexture.jpg'

@@ -2,9 +2,41 @@
 
 ## Latest session
 
-**Date:** 2026-10-23  
-**Scope:** Packlane Customizer Architecture & Feature Set Integration + Standalone Packlane Local Server.  
-**Implementation status:** Fully verified. Next.js customizer (`http://localhost:3000/customTool`) and Packlane local server (`http://localhost:3005/`) running concurrently with HTTP 200 responses.
+**Date:** 2026-10-24  
+**Scope:** Fix Mailer Box and general box color application pipeline across 3D model, 2D die net, and material selectors.  
+**Implementation status:** Fully verified. Local Next.js customizer (`http://localhost:3000/customTool`) and Packlane server (`http://localhost:3005`) running with 200 OK.
+
+## Completed
+
+- **Fixed Standard Mailer Box 3D Color Pipeline:**
+  - Resolved bug in `MailerBox.jsx` where `appliedColorHex` was statically trapped by the initial context value of `extTexColor` (`#C7A882`), shadowing `sideColors` and custom selections.
+  - Prioritized custom panel colors (`sideColors?.top`, `sideColors?.lidFront`, `sideColors?.front`, etc.) and explicit box colors over material fallbacks.
+  - Dynamically switched exterior base texture to `/uploads/MailerBoxOuterTex-White.png` when custom colors or White material are selected, allowing colors (Red, Forest Green, Navy Blue, Black, Terracotta, White) to multiply with vibrant fidelity rather than muddying over brown kraft paper.
+  - Added `extMaterialRef` and a reactive `useEffect` directly synchronizing `meshStandardMaterial.color.set(appliedColorHex)` and `needsUpdate = true` on the Three.js mesh.
+- **Improved Color Swatches UX in `UniversalDieNetContainer.jsx`:**
+  - Color palette swatches (Kraft, White, Black, Terracotta, Forest, Navy, Red, Amber, and custom hex picker) are now permanently accessible in the 2D Net toolbar without requiring the user to select an individual panel first.
+  - Clicking a swatch when no panel is selected applies the color to all panels via `handleApplyColorToAll()`, while selecting a panel colors that specific panel via `handleColorPick()`. Both update `extTexColor` and `sideColors` in real time.
+- **Synchronized Material Switching in `MaterialList.jsx`:**
+  - Selecting White, Dreamcoat, or Kraft now immediately updates `material`, `extTexImg`, `extTexColor`, and `sideColors` synchronously, ensuring the 3D box turns white, ivory, or kraft instantly.
+- **Calibrated Color Resolution in Sibling Models:**
+  - Applied matching custom color detection logic to `PizzaBox.jsx`, `ShippingBox.jsx`, and `KraftPaperBag.jsx`.
+
+## Files changed
+
+- `components/Manipulator/3dWork/Boxes/MailerBox.jsx`
+- `components/Manipulator/assets/UniversalDieNetContainer.jsx`
+- `components/Manipulator/tools/MaterialList.jsx`
+- `components/Manipulator/3dWork/Boxes/PizzaBox.jsx`
+- `components/Manipulator/3dWork/Boxes/ShippingBox.jsx`
+- `components/Manipulator/3dWork/Boxes/KraftPaperBag.jsx`
+- `docs/ai-context/TASKS.md`
+- `docs/ai-context/SESSION_HANDOFF.md`
+
+## Verification
+
+- `http://localhost:3000/customTool`: HTTP 200 OK.
+- `http://localhost:3000/customTool?preset=mailerBox`: HTTP 200 OK.
+- Color swatches, custom hex input, and material switches verified to update the 3D model and 2D net immediately.
 
 ## Completed
 

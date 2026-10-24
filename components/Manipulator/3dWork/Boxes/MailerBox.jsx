@@ -75,6 +75,8 @@ export function MailerBox(props) {
     };
   }, [isFeatureShowcase, selectedFeatureProduct, featureLogoUrl]);
 
+  const extMaterialRef = useRef();
+
   useEffect(() => {
     return () => {
       if (generatedBlobRef.current) {
@@ -84,21 +86,46 @@ export function MailerBox(props) {
     };
   }, []);
 
-  const defaultBaseColor = material === 'White' ? '#FFFFFF' : (material === 'Dreamcoat' ? '#FAF5EE' : '#C7A882');
-  const appliedColorHex = isFeatureShowcase ? '#FFFFFF' : (extTexColor || sideColors?.top || sideColors?.front || defaultBaseColor);
-  const hasCustomColor = !isFeatureShowcase && appliedColorHex && appliedColorHex.toUpperCase() !== '#C7A882';
+  const materialBaseColor = material === 'White' ? '#FFFFFF' : (material === 'Dreamcoat' ? '#FAF5EE' : '#C7A882');
+
+  // Detect any custom color picked for panels or whole box
+  const customColor =
+    (extTexColor && extTexColor.toUpperCase() !== '#C7A882' && extTexColor.toUpperCase() !== '#FAF5EE' ? extTexColor : null) ||
+    (sideColors?.top && sideColors.top.toUpperCase() !== '#C7A882' ? sideColors.top : null) ||
+    (sideColors?.lidFront && sideColors.lidFront.toUpperCase() !== '#C7A882' ? sideColors.lidFront : null) ||
+    (sideColors?.front && sideColors.front.toUpperCase() !== '#C7A882' ? sideColors.front : null) ||
+    (sideColors?.bottom && sideColors.bottom.toUpperCase() !== '#C7A882' ? sideColors.bottom : null) ||
+    (sideColors?.back && sideColors.back.toUpperCase() !== '#C7A882' ? sideColors.back : null) ||
+    (sideColors?.left && sideColors.left.toUpperCase() !== '#C7A882' ? sideColors.left : null) ||
+    (sideColors?.right && sideColors.right.toUpperCase() !== '#C7A882' ? sideColors.right : null);
+
+  const appliedColorHex = isFeatureShowcase
+    ? '#FFFFFF'
+    : (customColor || extTexColor || materialBaseColor);
+
+  const hasCustomColor = !isFeatureShowcase && appliedColorHex && appliedColorHex.toUpperCase() !== '#C7A882' && appliedColorHex.toUpperCase() !== '#FAF5EE';
 
   const defaultExtTex = material === 'White'
-    ? '/whiteCoatTexture.jpg'
-    : (extTexImg
-      ? (extTexImg.startsWith('/') ? extTexImg : `/uploads/${extTexImg}`)
-      : DEFAULT_EXT_TEX);
+    ? '/uploads/MailerBoxOuterTex-White.png'
+    : (material === 'Dreamcoat'
+      ? '/uploads/MailerBoxOuterTex-Dreamcoat.png'
+      : (extTexImg
+        ? (extTexImg.startsWith('/') ? extTexImg : `/uploads/${extTexImg}`)
+        : DEFAULT_EXT_TEX));
 
+  // When a custom color is active, use the white texture map so colors multiply with pure fidelity
   const extTexMapUrl = isFeatureShowcase
     ? (generatedFeatureTexUrl || DEFAULT_EXT_TEX)
-    : (hasCustomColor ? '/whiteCoatTexture.jpg' : (extTexImgBlob || defaultExtTex || DEFAULT_EXT_TEX));
+    : (extTexImgBlob || (hasCustomColor ? '/uploads/MailerBoxOuterTex-White.png' : defaultExtTex));
 
   const extTex = useTexture({ map: extTexMapUrl });
+
+  useEffect(() => {
+    if (extMaterialRef.current) {
+      extMaterialRef.current.color = new THREE.Color(appliedColorHex);
+      extMaterialRef.current.needsUpdate = true;
+    }
+  }, [appliedColorHex]);
 
   const [matObject, setMatObject] = useState({
     map: '/pizzaIntTexKraft.png',
@@ -186,6 +213,7 @@ export function MailerBox(props) {
             <mesh>
               <skinnedMesh name="Plane" geometry={nodes.Plane.geometry} skeleton={nodes.Plane.skeleton}>
                 <meshStandardMaterial
+                  ref={extMaterialRef}
                   {...extTex}
                   color={new THREE.Color(appliedColorHex)}
                   roughness={0.85}

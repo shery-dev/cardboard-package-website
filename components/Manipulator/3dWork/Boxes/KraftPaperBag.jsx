@@ -117,8 +117,13 @@ export function KraftPaperBag(props) {
     currentScale.z = THREE.MathUtils.lerp(currentScale.z, targetScale[2] * (isOpen ? 1.0 : 0.4), delta * 6);
   });
 
-  const defaultBaseColor = material === 'White' ? '#FFFFFF' : (material === 'Dreamcoat' ? '#FAF5EE' : '#C7A882');
-  const bagColorHex = isFeatureShowcase ? '#FFFFFF' : (extTexColor || sideColors?.front || sideColors?.top || defaultBaseColor);
+  const materialBaseColor = material === 'White' ? '#FFFFFF' : (material === 'Dreamcoat' ? '#FAF5EE' : '#C7A882');
+  const customColor =
+    (extTexColor && extTexColor.toUpperCase() !== '#C7A882' && extTexColor.toUpperCase() !== '#FAF5EE' ? extTexColor : null) ||
+    (sideColors?.front && sideColors.front.toUpperCase() !== '#C7A882' ? sideColors.front : null) ||
+    (sideColors?.top && sideColors.top.toUpperCase() !== '#C7A882' ? sideColors.top : null);
+
+  const bagColorHex = isFeatureShowcase ? '#FFFFFF' : (customColor || extTexColor || materialBaseColor);
 
   return (
     <group

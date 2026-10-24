@@ -170,15 +170,17 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
     }
   };
 
-  // Explicit user color pick for the active panel
+  // Explicit user color pick for the active panel or whole box
   const handleColorPick = (color) => {
-    if (!selectedSection) return;
+    const targetSection = selectedSection || 'top';
+    if (!selectedSection) setSelectedSection('top');
     if (setSideColors) {
       setSideColors((prev) => ({
         ...prev,
-        [selectedSection]: color,
+        [targetSection]: color,
       }));
     }
+    if (setExtTexColor) setExtTexColor(color);
     if (setSelectedColor) setSelectedColor(color);
   };
 
@@ -687,47 +689,60 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
           </div>
 
           {/* Color Palette Swatches */}
-          {selectedSection && (
-            <div className="flex items-center gap-1.5 pt-1 border-t border-[#EADFD5]">
-              <span className="text-[10px] text-[#6B584D] font-bold">Pick Color:</span>
-              <div className="flex items-center gap-1 flex-wrap">
-                {[
-                  { name: 'Kraft', hex: '#C7A882' },
-                  { name: 'White', hex: '#FFFFFF' },
-                  { name: 'Black', hex: '#212121' },
-                  { name: 'Terracotta', hex: '#A94F32' },
-                  { name: 'Forest', hex: '#15803D' },
-                  { name: 'Navy', hex: '#1E3A8A' },
-                  { name: 'Red', hex: '#DC2626' },
-                  { name: 'Amber', hex: '#D97706' },
-                ].map((swatch) => (
-                  <button
-                    key={swatch.name}
-                    type="button"
-                    onClick={() => handleColorPick(swatch.hex)}
-                    title={swatch.name}
-                    className="w-5 h-5 rounded-full border border-gray-300 shadow-xs hover:scale-110 transition-transform"
-                    style={{ backgroundColor: swatch.hex }}
-                  />
-                ))}
-                {/* Custom Color Input */}
-                <input
-                  type="color"
-                  title="Custom Hex Color"
-                  value={sideColors[selectedSection] || "#C7A882"}
-                  onChange={(e) => handleColorPick(e.target.value)}
-                  className="w-6 h-6 p-0 border border-gray-300 rounded cursor-pointer bg-transparent"
-                />
+          <div className="flex items-center gap-1.5 pt-1 border-t border-[#EADFD5]">
+            <span className="text-[10px] text-[#6B584D] font-bold">
+              {selectedSection ? `Color (${selectedSection}):` : "Box Color:"}
+            </span>
+            <div className="flex items-center gap-1 flex-wrap">
+              {[
+                { name: 'Kraft', hex: '#C7A882' },
+                { name: 'White', hex: '#FFFFFF' },
+                { name: 'Black', hex: '#212121' },
+                { name: 'Terracotta', hex: '#A94F32' },
+                { name: 'Forest', hex: '#15803D' },
+                { name: 'Navy', hex: '#1E3A8A' },
+                { name: 'Red', hex: '#DC2626' },
+                { name: 'Amber', hex: '#D97706' },
+              ].map((swatch) => (
                 <button
+                  key={swatch.name}
                   type="button"
-                  onClick={() => handleApplyColorToAll(sideColors[selectedSection] || '#C7A882')}
-                  className="px-2 py-0.5 text-[10px] font-bold rounded bg-[#2B211B] text-[#FFFDFC] hover:bg-[#A94F32] transition-colors ml-1"
-                >
-                  All Panels
-                </button>
-              </div>
+                  onClick={() => {
+                    if (selectedSection) {
+                      handleColorPick(swatch.hex);
+                    } else {
+                      handleApplyColorToAll(swatch.hex);
+                    }
+                  }}
+                  title={swatch.name}
+                  className="w-5 h-5 rounded-full border border-gray-300 shadow-xs hover:scale-110 transition-transform"
+                  style={{ backgroundColor: swatch.hex }}
+                />
+              ))}
+              {/* Custom Color Input */}
+              <input
+                type="color"
+                title="Custom Hex Color"
+                value={(selectedSection ? sideColors[selectedSection] : extTexColor) || "#C7A882"}
+                onChange={(e) => {
+                  if (selectedSection) {
+                    handleColorPick(e.target.value);
+                  } else {
+                    handleApplyColorToAll(e.target.value);
+                  }
+                }}
+                className="w-6 h-6 p-0 border border-gray-300 rounded cursor-pointer bg-transparent"
+              />
+              <button
+                type="button"
+                onClick={() => handleApplyColorToAll((selectedSection ? sideColors[selectedSection] : extTexColor) || '#C7A882')}
+                className="px-2 py-0.5 text-[10px] font-bold rounded bg-[#2B211B] text-[#FFFDFC] hover:bg-[#A94F32] transition-colors ml-1"
+                title="Apply color across all faces of the box"
+              >
+                All Panels
+              </button>
             </div>
-          )}
+          </div>
         </div>
       )}
 

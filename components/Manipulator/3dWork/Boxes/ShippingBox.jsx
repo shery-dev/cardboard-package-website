@@ -103,8 +103,16 @@ export function ShippingBox(props) {
     };
   }, []);
 
-  const defaultBaseColor = material === 'White' ? '#FFFFFF' : (material === 'Dreamcoat' ? '#FAF5EE' : '#C7A882');
-  const appliedColorHex = isFeatureShowcase ? '#FFFFFF' : (extTexColor || sideColors?.front || sideColors?.top || defaultBaseColor);
+  const materialBaseColor = material === 'White' ? '#FFFFFF' : (material === 'Dreamcoat' ? '#FAF5EE' : '#C7A882');
+  const customColor =
+    (extTexColor && extTexColor.toUpperCase() !== '#C7A882' && extTexColor.toUpperCase() !== '#FAF5EE' ? extTexColor : null) ||
+    (sideColors?.front && sideColors.front.toUpperCase() !== '#C7A882' ? sideColors.front : null) ||
+    (sideColors?.top && sideColors.top.toUpperCase() !== '#C7A882' ? sideColors.top : null) ||
+    (sideColors?.bottom && sideColors.bottom.toUpperCase() !== '#C7A882' ? sideColors.bottom : null);
+
+  const appliedColorHex = isFeatureShowcase
+    ? '#FFFFFF'
+    : (customColor || extTexColor || materialBaseColor);
   const hasCustomColor = !isFeatureShowcase && appliedColorHex && appliedColorHex.toUpperCase() !== '#C7A882';
 
   const defaultExtTex = material === 'White'
