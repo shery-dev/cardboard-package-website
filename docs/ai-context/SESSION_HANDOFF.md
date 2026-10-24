@@ -18,17 +18,25 @@
   - Clicking a swatch when no panel is selected applies the color to all panels via `handleApplyColorToAll()`, while selecting a panel colors that specific panel via `handleColorPick()`. Both update `extTexColor` and `sideColors` in real time.
 - **Synchronized Material Switching in `MaterialList.jsx`:**
   - Selecting White, Dreamcoat, or Kraft now immediately updates `material`, `extTexImg`, `extTexColor`, and `sideColors` synchronously, ensuring the 3D box turns white, ivory, or kraft instantly.
-- **Calibrated Color Resolution in Sibling Models:**
-  - Applied matching custom color detection logic to `PizzaBox.jsx`, `ShippingBox.jsx`, and `KraftPaperBag.jsx`.
+- **Unified Color Resolution Across All 17 Packaging Styles:**
+  - `DynamicBoxModel.jsx` (powering all 11 GLTF box styles: Tool Box, Two-Piece Gift Box, E-commerce Box, Laptop Box, Flat Folder Box, Food Combo Box, Food Platter with window, Apparel Box, Ration Box, 1:1:1 Cube Box, and Corporate Magnetic Box): eliminated `#C7A882` shadowing on `materialBaseColor` so White material (`#FFFFFF`), Dreamcoat (`#FAF5EE`), and custom palette swatches immediately and distinctly update both lid and body meshes in real time.
+  - `CakeBox.jsx`: added `bodyMatRef` and `lidMatRef` with reactive color synchronization.
+  - `PizzaSliceBox.jsx`: added `bodyMatRef` and `lidMatRef` with reactive color synchronization.
+  - `PizzaBox.jsx`: updated `appliedColor` resolution and `materialBaseColor` reference.
+  - `ShippingBox.jsx`: added `extMaterialRef` and reactive color synchronization.
+  - `KraftPaperBag.jsx`: added `bagMaterialRef` and reactive color synchronization.
 
 ## Files changed
 
 - `components/Manipulator/3dWork/Boxes/MailerBox.jsx`
-- `components/Manipulator/assets/UniversalDieNetContainer.jsx`
-- `components/Manipulator/tools/MaterialList.jsx`
+- `components/Manipulator/3dWork/Boxes/DynamicBoxModel.jsx`
+- `components/Manipulator/3dWork/Boxes/CakeBox.jsx`
+- `components/Manipulator/3dWork/Boxes/PizzaSliceBox.jsx`
 - `components/Manipulator/3dWork/Boxes/PizzaBox.jsx`
 - `components/Manipulator/3dWork/Boxes/ShippingBox.jsx`
 - `components/Manipulator/3dWork/Boxes/KraftPaperBag.jsx`
+- `components/Manipulator/assets/UniversalDieNetContainer.jsx`
+- `components/Manipulator/tools/MaterialList.jsx`
 - `docs/ai-context/TASKS.md`
 - `docs/ai-context/SESSION_HANDOFF.md`
 

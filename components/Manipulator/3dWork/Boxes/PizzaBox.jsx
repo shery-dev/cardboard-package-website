@@ -124,7 +124,7 @@ export function PizzaBox(props) {
   // Apply exterior and interior textures to the pizza box skinned meshes
   useEffect(() => {
     if (!scene) return;
-    const appliedColor = appliedColorHex || defaultBaseColor;
+    const appliedColor = appliedColorHex || materialBaseColor;
 
     scene.traverse((child) => {
       if (child.isSkinnedMesh || child.isMesh) {

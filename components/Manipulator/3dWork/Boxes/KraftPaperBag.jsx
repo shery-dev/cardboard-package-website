@@ -124,6 +124,14 @@ export function KraftPaperBag(props) {
     (sideColors?.top && sideColors.top.toUpperCase() !== '#C7A882' ? sideColors.top : null);
 
   const bagColorHex = isFeatureShowcase ? '#FFFFFF' : (customColor || extTexColor || materialBaseColor);
+  const bagMaterialRef = useRef();
+
+  useEffect(() => {
+    if (bagMaterialRef.current) {
+      bagMaterialRef.current.color = new THREE.Color(bagColorHex);
+      bagMaterialRef.current.needsUpdate = true;
+    }
+  }, [bagColorHex]);
 
   return (
     <group
@@ -141,6 +149,7 @@ export function KraftPaperBag(props) {
             geometry={nodes.PlaneWOA.geometry}
           >
             <meshStandardMaterial
+              ref={bagMaterialRef}
               {...extTex}
               color={bagColorHex}
               roughness={0.88}

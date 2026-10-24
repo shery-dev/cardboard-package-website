@@ -124,6 +124,14 @@ export function ShippingBox(props) {
     : (hasCustomColor ? '/whiteCoatTexture.jpg' : (extTexImgBlob || defaultExtTex));
 
   const extTex = useTexture({ map: extTexMapUrl });
+  const extMaterialRef = useRef();
+
+  useEffect(() => {
+    if (extMaterialRef.current) {
+      extMaterialRef.current.color = new THREE.Color(appliedColorHex);
+      extMaterialRef.current.needsUpdate = true;
+    }
+  }, [appliedColorHex]);
 
   const [matObject, setMatObject] = useState({
     map: '/shippingIntTexKraft.png',
@@ -223,6 +231,7 @@ export function ShippingBox(props) {
                 skeleton={nodes.PlaneWOA.skeleton}
               >
                 <meshStandardMaterial
+                  ref={extMaterialRef}
                   {...extTex}
                   color={new THREE.Color(appliedColorHex)}
                   roughness={0.85}

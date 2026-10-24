@@ -195,13 +195,26 @@ export function DynamicBoxModel({
         }
 
         const isLid = child.name.toLowerCase().includes('lid') || (lidGroupName && child.name.includes(lidGroupName));
-        const lidColor = sideColors?.top || sideColors?.lidFront || sideColors?.lid || extTexColor;
-        const bodyColor = sideColors?.front || sideColors?.bottom || sideColors?.back || sideColors?.left || sideColors?.right || extTexColor;
-        const defaultBaseColor = material === 'White' ? '#FFFFFF' : (material === 'Dreamcoat' ? '#FAF5EE' : '#C7A882');
+        const materialBaseColor = material === 'White' ? '#FFFFFF' : (material === 'Dreamcoat' ? '#FAF5EE' : '#C7A882');
+
+        const customLidColor =
+          (sideColors?.top && sideColors.top.toUpperCase() !== '#C7A882' ? sideColors.top : null) ||
+          (sideColors?.lidFront && sideColors.lidFront.toUpperCase() !== '#C7A882' ? sideColors.lidFront : null) ||
+          (sideColors?.lid && sideColors.lid.toUpperCase() !== '#C7A882' ? sideColors.lid : null) ||
+          (sideColors?.lidTop && sideColors.lidTop.toUpperCase() !== '#C7A882' ? sideColors.lidTop : null) ||
+          (extTexColor && extTexColor.toUpperCase() !== '#C7A882' && extTexColor.toUpperCase() !== '#FAF5EE' ? extTexColor : null);
+
+        const customBodyColor =
+          (sideColors?.front && sideColors.front.toUpperCase() !== '#C7A882' ? sideColors.front : null) ||
+          (sideColors?.bottom && sideColors.bottom.toUpperCase() !== '#C7A882' ? sideColors.bottom : null) ||
+          (sideColors?.back && sideColors.back.toUpperCase() !== '#C7A882' ? sideColors.back : null) ||
+          (sideColors?.left && sideColors.left.toUpperCase() !== '#C7A882' ? sideColors.left : null) ||
+          (sideColors?.right && sideColors.right.toUpperCase() !== '#C7A882' ? sideColors.right : null) ||
+          (extTexColor && extTexColor.toUpperCase() !== '#C7A882' && extTexColor.toUpperCase() !== '#FAF5EE' ? extTexColor : null);
 
         const appliedColorHex = isFeatureShowcase
           ? '#FFFFFF'
-          : (isLid ? (lidColor || defaultBaseColor) : (bodyColor || defaultBaseColor));
+          : (isLid ? (customLidColor || extTexColor || materialBaseColor) : (customBodyColor || extTexColor || materialBaseColor));
 
         child.material = new THREE.MeshStandardMaterial({
           map: extTex.map,
