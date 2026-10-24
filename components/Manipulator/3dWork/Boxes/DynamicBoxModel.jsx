@@ -97,10 +97,10 @@ export function DynamicBoxModel({
     ? '/dreamCoatTexture.jpg'
     : '/whiteCoatTexture.jpg';
 
-  // For 3D GLTF models, support extTexImgBlob for custom artwork/colors or default to clean paper texture
+  // DynamicBoxModel uses realistic paper grain texture, or branded texture in feature showcase mode
   const extTexMapUrl = isFeatureShowcase
     ? (generatedFeatureTexUrl || defaultExtTex)
-    : (extTexImgBlob || defaultExtTex);
+    : defaultExtTex;
 
   const extTex = useTexture({ map: extTexMapUrl });
   const { scene } = useGLTF(glbPath);
@@ -174,7 +174,7 @@ export function DynamicBoxModel({
     }
   });
 
-  // Apply active textures and panel colors to meshes in the cloned scene
+  // Apply discrete panel colors to corresponding 3D faces across all meshes in the scene
   React.useEffect(() => {
     clonedScene.traverse((child) => {
       if (child.isMesh) {
@@ -197,36 +197,66 @@ export function DynamicBoxModel({
         const isLid = child.name.toLowerCase().includes('lid') || (lidGroupName && child.name.includes(lidGroupName));
         const materialBaseColor = material === 'White' ? '#FFFFFF' : (material === 'Dreamcoat' ? '#FAF5EE' : '#C7A882');
 
-        const customLidColor =
-          (sideColors?.top && sideColors.top.toUpperCase() !== '#C7A882' ? sideColors.top : null) ||
-          (sideColors?.lidFront && sideColors.lidFront.toUpperCase() !== '#C7A882' ? sideColors.lidFront : null) ||
-          (sideColors?.lid && sideColors.lid.toUpperCase() !== '#C7A882' ? sideColors.lid : null) ||
-          (sideColors?.lidTop && sideColors.lidTop.toUpperCase() !== '#C7A882' ? sideColors.lidTop : null);
+        const activeMap = isFeatureShowcase ? extTex.map : extTex.map;
 
-        const customBodyColor =
-          (sideColors?.front && sideColors.front.toUpperCase() !== '#C7A882' ? sideColors.front : null) ||
-          (sideColors?.bottom && sideColors.bottom.toUpperCase() !== '#C7A882' ? sideColors.bottom : null) ||
-          (sideColors?.back && sideColors.back.toUpperCase() !== '#C7A882' ? sideColors.back : null) ||
-          (sideColors?.left && sideColors.left.toUpperCase() !== '#C7A882' ? sideColors.left : null) ||
-          (sideColors?.right && sideColors.right.toUpperCase() !== '#C7A882' ? sideColors.right : null);
+        const createFaceMaterial = (colorHex) =>
+          new THREE.MeshStandardMaterial({
+            map: activeMap,
+            color: new THREE.Color(isFeatureShowcase ? '#FFFFFF' : colorHex),
+            roughness: 0.85,
+            metalness: 0.02,
+            side: THREE.DoubleSide,
+          });
 
-        const appliedColorHex = isFeatureShowcase
-          ? '#FFFFFF'
-          : (extTexImgBlob
-            ? '#FFFFFF'
-            : (isLid ? (customLidColor || extTexColor || materialBaseColor) : (customBodyColor || extTexColor || materialBaseColor)));
+        if (isLid) {
+          // Top Cover Lid face color
+          const lidColor = sideColors?.top || sideColors?.lidTop || sideColors?.lid || extTexColor || materialBaseColor;
+          child.material = createFaceMaterial(lidColor);
+          if (child.material.map) {
+            child.material.map.flipY = false;
+            child.material.needsUpdate = true;
+          }
+        } else {
+          // Body / Tray mesh: 30 vertices representing the 5 box faces
+          const vertexCount = child.geometry?.attributes?.position?.count;
+          if (vertexCount === 30) {
+            // Assign geometry groups for each face:
+            // v0..v5: Bottom tray base
+            // v6..v11: Back wall
+            // v12..v17: Front wall
+            // v18..v23: Left wall
+            // v24..v29: Right wall
+            if (!child.geometry._multiMaterialGrouped) {
+              child.geometry.clearGroups();
+              child.geometry.addGroup(0, 6, 0);  // Bottom
+              child.geometry.addGroup(6, 6, 1);  // Back
+              child.geometry.addGroup(12, 6, 2); // Front
+              child.geometry.addGroup(18, 6, 3); // Left
+              child.geometry.addGroup(24, 6, 4); // Right
+              child.geometry._multiMaterialGrouped = true;
+            }
 
-        child.material = new THREE.MeshStandardMaterial({
-          map: extTex.map,
-          color: new THREE.Color(appliedColorHex),
-          roughness: 0.85,
-          metalness: 0.02,
-          side: THREE.DoubleSide,
-        });
+            const colorBottom = sideColors?.bottom || extTexColor || materialBaseColor;
+            const colorBack = sideColors?.back || extTexColor || materialBaseColor;
+            const colorFront = sideColors?.front || extTexColor || materialBaseColor;
+            const colorLeft = sideColors?.left || extTexColor || materialBaseColor;
+            const colorRight = sideColors?.right || extTexColor || materialBaseColor;
 
-        if (child.material.map) {
-          child.material.map.flipY = false;
-          child.material.needsUpdate = true;
+            child.material = [
+              createFaceMaterial(colorBottom),
+              createFaceMaterial(colorBack),
+              createFaceMaterial(colorFront),
+              createFaceMaterial(colorLeft),
+              createFaceMaterial(colorRight),
+            ];
+          } else {
+            const bodyColor = sideColors?.front || sideColors?.bottom || extTexColor || materialBaseColor;
+            child.material = createFaceMaterial(bodyColor);
+            if (child.material.map) {
+              child.material.map.flipY = false;
+              child.material.needsUpdate = true;
+            }
+          }
         }
       }
     });

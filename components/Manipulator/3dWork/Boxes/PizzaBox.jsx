@@ -148,7 +148,7 @@ export function PizzaBox(props) {
         }
       }
     });
-  }, [scene, extTex.map, intTex.map, material, extTexColor, sideColors, isFeatureShowcase]);
+  }, [scene, extTex.map, intTex.map, material, extTexColor, sideColors, isFeatureShowcase, appliedColorHex]);
 
   const topBone = React.useMemo(() => {
     let found = null;

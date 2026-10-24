@@ -101,36 +101,194 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
   const wid = Number(selectedSize?.width) || activeBoxPreset?.defaultSize?.width || 10;
   const dep = Number(selectedSize?.depth) || activeBoxPreset?.defaultSize?.depth || 4;
 
-  // Convert rendered SVG flat die net into 3D texture blob
+  // Convert rendered flat die net into exact 3D texture blob with 1:1 UV alignment
   const convertSvgToJpg = useCallback(() => {
-    const svgElement = svgRef.current;
     const canvas = canvasRef.current;
-    if (!svgElement || !canvas) return;
-
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const exportWidth = 2048;
-    const exportHeight = 2048;
-    canvas.width = exportWidth;
-    canvas.height = exportHeight;
+    if (!ctx) return;
 
-    // Clone SVG and hide technical text/measurements while preserving user typography
+    const baseColor = extTexColor || '#C7A882';
+
+    // 1. Mailer Box: exact square 2048x2048 unwrap matching MailerBox.glb UVs (245.76 square space)
+    if (presetId === 'mailerBox') {
+      const exportWidth = 2048;
+      const exportHeight = 2048;
+      canvas.width = exportWidth;
+      canvas.height = exportHeight;
+
+      // Fill base background
+      ctx.fillStyle = baseColor;
+      ctx.fillRect(0, 0, exportWidth, exportHeight);
+
+      const scale = exportWidth / 245.76;
+      const MAILER_UV_BOUNDS = {
+        lidFront: { x: 98.81, y: 2.61, width: 48.1, height: 47.59 },
+        top: { x: 98.81, y: 52.44, width: 48.1, height: 44.54 },
+        back: { x: 98.81, y: 101.66, width: 48.1, height: 43.73 },
+        bottom: { x: 98.81, y: 148.24, width: 48.1, height: 46.07 },
+        front: { x: 98.81, y: 196.24, width: 48.1, height: 45.56 },
+        left: { x: 147.93, y: 148.24, width: 48.97, height: 45.81 },
+        right: { x: 45.58, y: 148.24, width: 51.71, height: 46.07 },
+      };
+
+      Object.entries(MAILER_UV_BOUNDS).forEach(([key, b]) => {
+        const color = sideColors[key] || baseColor;
+        ctx.fillStyle = color;
+        ctx.fillRect(
+          Math.floor(b.x * scale) - 1,
+          Math.floor(b.y * scale) - 1,
+          Math.ceil(b.width * scale) + 2,
+          Math.ceil(b.height * scale) + 2
+        );
+      });
+
+      // Render user custom text if present
+      if (textElements && Object.keys(textElements).length > 0) {
+        Object.values(textElements).forEach((t) => {
+          if (!t) return;
+          let targetX = (t.x / 540) * exportWidth;
+          let targetY = (t.y / 440) * exportHeight;
+          if (t.x >= 190 && t.x <= 350 && t.y >= 40 && t.y <= 140) {
+            const rx = (t.x - 190) / 160;
+            const ry = (t.y - 40) / 100;
+            targetX = (98.81 + rx * 48.1) * scale;
+            targetY = (52.44 + ry * 44.54) * scale;
+          } else if (t.x >= 190 && t.x <= 350 && t.y >= 190 && t.y <= 310) {
+            const rx = (t.x - 190) / 160;
+            const ry = (t.y - 190) / 120;
+            targetX = (98.81 + rx * 48.1) * scale;
+            targetY = (148.24 + ry * 46.07) * scale;
+          } else if (t.x >= 190 && t.x <= 350 && t.y >= 310 && t.y <= 360) {
+            const rx = (t.x - 190) / 160;
+            const ry = (t.y - 310) / 50;
+            targetX = (98.81 + rx * 48.1) * scale;
+            targetY = (196.24 + ry * 45.56) * scale;
+          }
+          ctx.save();
+          ctx.translate(targetX, targetY);
+          ctx.rotate(((t.rotation || 0) * Math.PI) / 180);
+          ctx.font = `${t.isBold ? 'bold ' : ''}${t.isItalic ? 'italic ' : ''}${Math.round((t.fontSize || 20) * (scale / 2.5))}px ${t.fontFamily || 'sans-serif'}`;
+          ctx.fillStyle = t.color || '#2B211B';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(t.text || '', 0, 0);
+          ctx.restore();
+        });
+      }
+
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const blobUrl = URL.createObjectURL(blob);
+        setExtTexImgBlob(blobUrl);
+      }, 'image/jpeg', 0.95);
+      return;
+    }
+
+    // 2. Pizza Box: 215.7 x 396 unwrap
+    if (presetId === 'pizzaBox') {
+      const exportWidth = 2048;
+      const exportHeight = 3760;
+      canvas.width = exportWidth;
+      canvas.height = exportHeight;
+
+      ctx.fillStyle = baseColor;
+      ctx.fillRect(0, 0, exportWidth, exportHeight);
+
+      const scaleX = exportWidth / 215.7;
+      const scaleY = exportHeight / 396;
+      const PIZZA_UV_BOUNDS = {
+        top: { x: 11.05, y: 29.32, width: 191.59, height: 149.69 },
+        bottom: { x: 11.05, y: 215.22, width: 189.15, height: 148.88 },
+        lidFront: { x: 11.05, y: 0, width: 191.59, height: 26.47 },
+        back: { x: 14.31, y: 181.46, width: 183.86, height: 30.92 },
+        front: { x: 28.14, y: 365.73, width: 158.09, height: 30.27 },
+        right: { x: 202.64, y: 215.22, width: 13.07, height: 148.88 },
+        left: { x: 0, y: 215.22, width: 9.02, height: 148.88 },
+      };
+
+      Object.entries(PIZZA_UV_BOUNDS).forEach(([key, b]) => {
+        const color = sideColors[key] || baseColor;
+        ctx.fillStyle = color;
+        ctx.fillRect(
+          Math.floor(b.x * scaleX) - 1,
+          Math.floor(b.y * scaleY) - 1,
+          Math.ceil(b.width * scaleX) + 2,
+          Math.ceil(b.height * scaleY) + 2
+        );
+      });
+
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const blobUrl = URL.createObjectURL(blob);
+        setExtTexImgBlob(blobUrl);
+      }, 'image/jpeg', 0.95);
+      return;
+    }
+
+    // 3. Shipping Box (Carton): 1920 x 1080 unwrap
+    if (presetId === 'carton') {
+      const exportWidth = 1920;
+      const exportHeight = 1080;
+      canvas.width = exportWidth;
+      canvas.height = exportHeight;
+
+      ctx.fillStyle = baseColor;
+      ctx.fillRect(0, 0, exportWidth, exportHeight);
+
+      const SHIPPING_UV_BOUNDS = {
+        front: { x: 530.1, y: 312.1, width: 415, height: 453.2 },
+        back: { x: 1489.7, y: 312.2, width: 415, height: 453.1 },
+        left: { x: 8.5, y: 312.1, width: 509.6, height: 453.4 },
+        right: { x: 968.1, y: 312.1, width: 509.6, height: 453.5 },
+        bottom: { x: 530.1, y: 768.2, width: 415, height: 309.4 },
+        top: { x: 530.1, y: 0, width: 415, height: 312.1 },
+      };
+
+      Object.entries(SHIPPING_UV_BOUNDS).forEach(([key, b]) => {
+        const color = sideColors[key] || baseColor;
+        ctx.fillStyle = color;
+        ctx.fillRect(
+          Math.floor(b.x) - 1,
+          Math.floor(b.y) - 1,
+          Math.ceil(b.width) + 2,
+          Math.ceil(b.height) + 2
+        );
+      });
+
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        const blobUrl = URL.createObjectURL(blob);
+        setExtTexImgBlob(blobUrl);
+      }, 'image/jpeg', 0.95);
+      return;
+    }
+
+    // 4. For all other 14 box types, panel colors are rendered directly onto 3D face geometries
+    // We only rasterize if user specifically added user typography or uploaded art
+    const svgElement = svgRef.current;
+    if (!svgElement) return;
+    const hasCustomUserArt = (images && Object.keys(images).length > 0) || (textElements && Object.keys(textElements).length > 0);
+    if (!hasCustomUserArt) return;
+
     const clonedSvg = svgElement.cloneNode(true);
-    clonedSvg.setAttribute('width', String(exportWidth));
-    clonedSvg.setAttribute('height', String(exportHeight));
+    clonedSvg.setAttribute('width', '2048');
+    clonedSvg.setAttribute('height', '2048');
     clonedSvg.querySelectorAll('text:not(.user-custom-text)').forEach((t) => (t.style.display = 'none'));
     clonedSvg.querySelectorAll('line').forEach((l) => (l.style.display = 'none'));
+    clonedSvg.querySelectorAll('polygon, rect, path').forEach((p) => {
+      p.setAttribute('stroke', 'none');
+    });
 
     const svgData = new XMLSerializer().serializeToString(clonedSvg);
     const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(svgBlob);
-
     const img = new Image();
     img.onload = () => {
-      ctx.clearRect(0, 0, exportWidth, exportHeight);
-      ctx.fillStyle = extTexColor || '#C7A882';
-      ctx.fillRect(0, 0, exportWidth, exportHeight);
-      ctx.drawImage(img, 0, 0, exportWidth, exportHeight);
-
+      ctx.clearRect(0, 0, 2048, 2048);
+      ctx.fillStyle = baseColor;
+      ctx.fillRect(0, 0, 2048, 2048);
+      ctx.drawImage(img, 0, 0, 2048, 2048);
       canvas.toBlob((blob) => {
         if (!blob) return;
         const blobUrl = URL.createObjectURL(blob);
@@ -139,7 +297,16 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
       }, 'image/jpeg', 0.95);
     };
     img.src = url;
-  }, [extTexColor, setExtTexImgBlob]);
+  }, [presetId, extTexColor, sideColors, setExtTexImgBlob, images, textElements]);
+
+  useEffect(() => {
+    if (presetId === 'mailerBox' || presetId === 'pizzaBox' || presetId === 'carton') {
+      const timer = setTimeout(() => {
+        convertSvgToJpg();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [presetId, convertSvgToJpg]);
 
   const applyDesignTo3D = () => {
     setApplied(true);
@@ -182,8 +349,11 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
       }));
     }
     if (setSelectedColor) setSelectedColor(color);
-    // Regenerate 3D texture blob with the updated panel colors
-    setTimeout(() => convertSvgToJpg(), 80);
+
+    // For UV-mapped textured models, regenerate 3D texture blob
+    if (presetId === 'mailerBox' || presetId === 'pizzaBox' || presetId === 'carton') {
+      setTimeout(() => convertSvgToJpg(), 60);
+    }
   };
 
   // Apply color to all faces of the box at once
@@ -193,29 +363,16 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
     if (setSideColors) {
       setSideColors((prev) => {
         const next = { ...prev };
-        Object.keys(next).forEach((k) => {
+        ['top', 'bottom', 'front', 'back', 'left', 'right', 'lidFront', 'lid', 'lidTop', 'lidLeft', 'lidRight', 'bottomFront', 'bottomBack', 'bottomLeft', 'bottomRight'].forEach((k) => {
           next[k] = color;
         });
-        next.top = color;
-        next.lidFront = color;
-        next.lid = color;
-        next.front = color;
-        next.back = color;
-        next.left = color;
-        next.right = color;
-        next.bottom = color;
-        next.lidTop = color;
-        next.lidRight = color;
-        next.lidLeft = color;
-        next.bottomFront = color;
-        next.bottomBack = color;
-        next.bottomLeft = color;
-        next.bottomRight = color;
         return next;
       });
     }
-    // Regenerate 3D texture blob with the uniform color across all panels
-    setTimeout(() => convertSvgToJpg(), 80);
+    // For UV-mapped textured models, regenerate 3D texture blob
+    if (presetId === 'mailerBox' || presetId === 'pizzaBox' || presetId === 'carton') {
+      setTimeout(() => convertSvgToJpg(), 60);
+    }
   };
 
   const handleResetPanelColor = () => {
@@ -227,7 +384,9 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
         [selectedSection]: defaultColor,
       }));
     }
-    setTimeout(() => convertSvgToJpg(), 80);
+    if (presetId === 'mailerBox' || presetId === 'pizzaBox' || presetId === 'carton') {
+      setTimeout(() => convertSvgToJpg(), 60);
+    }
   };
 
   // Image Upload handler

@@ -94,7 +94,7 @@ export function KraftPaperBag(props) {
 
   const extTexMapUrl = isFeatureShowcase
     ? (generatedFeatureTexUrl || defaultExtTex)
-    : (extTexImgBlob || defaultExtTex);
+    : defaultExtTex;
 
   const extTex = useTexture({ map: extTexMapUrl });
 
@@ -118,24 +118,44 @@ export function KraftPaperBag(props) {
   });
 
   const materialBaseColor = material === 'White' ? '#FFFFFF' : (material === 'Dreamcoat' ? '#FAF5EE' : '#C7A882');
-  const customColor =
-    (extTexColor && extTexColor.toUpperCase() !== '#C7A882' && extTexColor.toUpperCase() !== '#FAF5EE' ? extTexColor : null) ||
-    (sideColors?.front && sideColors.front.toUpperCase() !== '#C7A882' ? sideColors.front : null) ||
-    (sideColors?.top && sideColors.top.toUpperCase() !== '#C7A882' ? sideColors.top : null);
 
-  const bagColorHex = isFeatureShowcase ? '#FFFFFF' : (extTexImgBlob ? '#FFFFFF' : (customColor || extTexColor || materialBaseColor));
-  const bagMaterialRef = useRef();
+  const colorFront = sideColors?.front || extTexColor || materialBaseColor;
+  const colorBack = sideColors?.back || extTexColor || materialBaseColor;
+  const colorLeft = sideColors?.left || extTexColor || materialBaseColor;
+  const colorRight = sideColors?.right || extTexColor || materialBaseColor;
+  const colorBottom = sideColors?.bottom || extTexColor || materialBaseColor;
 
   useEffect(() => {
-    if (bagMaterialRef.current) {
-      if (extTex?.map) {
-        bagMaterialRef.current.map = extTex.map;
-        bagMaterialRef.current.map.needsUpdate = true;
+    if (nodes?.PlaneWOA?.geometry) {
+      const geom = nodes.PlaneWOA.geometry;
+      if (!geom._multiMaterialGrouped) {
+        geom.clearGroups();
+        geom.addGroup(0, 6, 0);   // Front
+        geom.addGroup(6, 6, 1);   // Back
+        geom.addGroup(12, 12, 2); // Left
+        geom.addGroup(24, 6, 3);  // Right
+        geom.addGroup(30, 6, 4);  // Bottom
+        geom._multiMaterialGrouped = true;
       }
-      bagMaterialRef.current.color = new THREE.Color(bagColorHex);
-      bagMaterialRef.current.needsUpdate = true;
     }
-  }, [bagColorHex, extTex.map]);
+  }, [nodes]);
+
+  const createFaceMat = (hex) =>
+    new THREE.MeshStandardMaterial({
+      map: isFeatureShowcase ? extTex.map : extTex.map,
+      color: new THREE.Color(isFeatureShowcase ? '#FFFFFF' : hex),
+      roughness: 0.88,
+      metalness: 0.02,
+      side: THREE.DoubleSide,
+    });
+
+  const bagMaterials = React.useMemo(() => [
+    createFaceMat(colorFront),
+    createFaceMat(colorBack),
+    createFaceMat(colorLeft),
+    createFaceMat(colorRight),
+    createFaceMat(colorBottom),
+  ], [colorFront, colorBack, colorLeft, colorRight, colorBottom, isFeatureShowcase, extTex.map]);
 
   return (
     <group
@@ -147,20 +167,12 @@ export function KraftPaperBag(props) {
     >
       <group name="Scene">
         <group name="KraftBagRoot">
-          {/* Main Paper Bag Body */}
+          {/* Main Paper Bag Body with distinct panel colors */}
           <mesh
             name="PlaneWOA"
             geometry={nodes.PlaneWOA.geometry}
-          >
-            <meshStandardMaterial
-              ref={bagMaterialRef}
-              {...extTex}
-              color={bagColorHex}
-              roughness={0.88}
-              metalness={0.02}
-              side={THREE.DoubleSide}
-            />
-          </mesh>
+            material={bagMaterials}
+          />
 
           {/* Front Twisted Rope Handle */}
           <mesh

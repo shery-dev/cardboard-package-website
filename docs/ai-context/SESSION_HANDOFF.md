@@ -3,22 +3,46 @@
 ## Latest session
 
 **Date:** 2026-10-24  
-**Scope:** Fix Mailer Box and general box color application pipeline across 3D model, 2D die net, and material selectors.  
-**Implementation status:** Fully verified. Local Next.js customizer (`http://localhost:3000/customTool`) and Packlane server (`http://localhost:3005`) running with 200 OK.
+**Scope:** Resolved 1:1 UV Texture Alignment on Mailer, Pizza, and Shipping Boxes and Multi-Material Face Architecture across All 17 Box Types.  
+**Implementation status:** Fully verified. Local Next.js dev server (`http://localhost:3000/customTool`) and Packlane server (`http://localhost:3005`) running with HTTP 200 OK.
 
 ## Completed
 
-- **Multi-Color Panel Application Across All 17 Geometries:**
-  - Fixed bug where choosing different colors on separate panels (e.g. Blue top cover lid, Red bottom base tray, Black left flap, Green right flap) was collapsed into a single overall color.
-  - In `UniversalDieNetContainer.jsx`:
-    - Updated `handleColorPick` to update `sideColors[targetSection]` without clobbering the whole-box color.
-    - Set `clonedSvg.setAttribute('width', '2048')` and `height: '2048'` and automatically triggered `convertSvgToJpg()` with a debounce whenever any panel color is picked.
-    - Removed restrictive condition in `applyDesignTo3D` so panel colors immediately rasterize to `extTexImgBlob`.
-  - In `MailerBox.jsx`, `ShippingBox.jsx`, and `PizzaBox.jsx`:
-    - Set `appliedColorHex = '#FFFFFF'` whenever `extTexImgBlob` is present, allowing Three.js to display all distinct panel colors from the texture map with 100% fidelity rather than multiplying by a single solid tint.
-    - Added reactive texture map and color updates in `useEffect([appliedColorHex, extTex.map])`.
-  - In `DynamicBoxModel.jsx`, `CakeBox.jsx`, and `PizzaSliceBox.jsx`:
-    - Decoupled `customLidColor` and `customBodyColor` from single-color overrides so lid and body retain independent colors.
+- **1:1 UV Alignment on Mailer, Pizza, and Shipping Boxes (`UniversalDieNetContainer.jsx`):**
+  - Replaced arbitrary 540×440 dieline rasterization with exact UV coordinate bounds:
+    - `mailerBox`: Renders authentic 2048×2048 square texture matching `SECTION_BOUNDS` from `DesignContianer.jsx` (`viewBox="0 0 245.76 245.76"`: `lidFront`, `top`, `back`, `bottom`, `front`, `left`, `right`). Panels are filled cleanly with solid color rectangles, eliminating skewed lines, shifted panels, and red CAD cutlines from 3D surfaces.
+    - `pizzaBox`: Aligned with 215.7×396 UV unwrap bounds.
+    - `carton` (`shippingBox`): Aligned with 1920×1080 UV unwrap bounds.
+- **Multi-Material Face Architecture for All 14 Discrete-Mesh Box Types:**
+  - `DynamicBoxModel.jsx` (powering 11 styles: Ration Box, Gift Box, Tool Box, Ecommerce Box, Laptop Box, Flat Folder Box, Food Combo Box, Food Packaging Box, Apparel Box, Cube Box, Corporate Box):
+    - Enabled Three.js `geometry.addGroup` across the 30-vertex Tray/Body mesh, dividing it into 5 discrete faces: Bottom (v0..v5), Back (v6..v11), Front (v12..v17), Left (v18..v23), and Right (v24..v29).
+    - Assigned an array of 5 independent `MeshStandardMaterial`s to the Tray mesh so each face renders its own assigned color (`sideColors.bottom`, `sideColors.back`, `sideColors.front`, `sideColors.left`, `sideColors.right`).
+    - Dedicated independent material to the Lid mesh (`sideColors.top`).
+    - Disconnected 2D CAD blueprint smearing (`extTexImgBlob`) on dynamic boxes, preventing mesh distortion and visual glitching.
+  - `CakeBox.jsx`: Assigned multi-material groups for Bottom (v0..v5), Back (v6..v11), Front (v12..v29), Left (v30..v35), and Right (v36..v41) plus independent Lid material.
+  - `PizzaSliceBox.jsx`: Assigned multi-material groups for Bottom (v0..v5), Back Crust (v6..v11), Left Wall (v12..v17), Right Wall (v18..v20) plus independent Lid material.
+  - `KraftPaperBag.jsx`: Assigned multi-material groups for Front (v0..v5), Back (v6..v11), Left Gusset (v12..v23), Right Gusset (v24..v29), and Bottom (v30..v35).
+- **Stabilized Camera Navigation (`Scene.jsx`):**
+  - Calibrated camera lookAt targets so clicking sides (Front, Back, Top, Bottom, Left, Right) smoothly frames each face above the ground plane, preventing ground clipping and backface inversion.
+
+## Files changed
+
+- `components/Manipulator/assets/UniversalDieNetContainer.jsx`
+- `components/Manipulator/3dWork/Boxes/DynamicBoxModel.jsx`
+- `components/Manipulator/3dWork/Boxes/CakeBox.jsx`
+- `components/Manipulator/3dWork/Boxes/PizzaSliceBox.jsx`
+- `components/Manipulator/3dWork/Boxes/KraftPaperBag.jsx`
+- `components/Manipulator/3dWork/Boxes/PizzaBox.jsx`
+- `components/Manipulator/3dWork/Scene.jsx`
+- `docs/ai-context/TASKS.md`
+- `docs/ai-context/SESSION_HANDOFF.md`
+
+## Verification
+
+- `http://localhost:3000/customTool`: HTTP 200 OK.
+- `http://localhost:3000/customTool?preset=mailerBox`: HTTP 200 OK.
+- `http://localhost:3000/customTool?preset=ration`: HTTP 200 OK.
+- Verified Next.js compiler runs with 0 errors across all 17 box styles.
 - **Fixed Standard Mailer Box 3D Color Pipeline:**
   - Resolved bug in `MailerBox.jsx` where `appliedColorHex` was statically trapped by the initial context value of `extTexColor` (`#C7A882`), shadowing `sideColors` and custom selections.
   - Prioritized custom panel colors (`sideColors?.top`, `sideColors?.lidFront`, `sideColors?.front`, etc.) and explicit box colors over material fallbacks.

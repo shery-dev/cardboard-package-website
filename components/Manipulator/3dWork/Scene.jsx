@@ -56,17 +56,17 @@ const Scene = ({ isMiniPreview = false }) => {
 
         // Smooth camera navigation to focus directly on the clicked side of the box
         if (side.includes('front') || side === 'topfront' || side === 'bottomfront' || side === 'lidfront') {
-            cameraControls.setLookAt(0, -1, 13, 0, -1, 0, true);
+            cameraControls.setLookAt(0, 0, 13, 0, 0, 0, true);
         } else if (side.includes('back') || side === 'topback' || side === 'backwall') {
-            cameraControls.setLookAt(0, -1, -13, 0, -1, 0, true);
+            cameraControls.setLookAt(0, 0, -13, 0, 0, 0, true);
         } else if (side === 'top' || side.includes('lid') || side === 'cover') {
-            cameraControls.setLookAt(0, 13, 2.5, 0, -1, 0, true);
+            cameraControls.setLookAt(0, 13, 1.5, 0, 0, 0, true);
         } else if (side === 'bottom' || side === 'base' || side === 'tray') {
-            cameraControls.setLookAt(0, -9, 3.5, 0, -2, 0, true);
+            cameraControls.setLookAt(0, 9, 7, 0, -2, 0, true);
         } else if (side.includes('left')) {
-            cameraControls.setLookAt(-13, -1, 0, 0, -1, 0, true);
+            cameraControls.setLookAt(-13, 0, 0, 0, 0, 0, true);
         } else if (side.includes('right')) {
-            cameraControls.setLookAt(13, -1, 0, 0, -1, 0, true);
+            cameraControls.setLookAt(13, 0, 0, 0, 0, 0, true);
         }
     }, [selectedSide]);
 
