@@ -1,0 +1,17 @@
+{
+  "name": "packlane-editor-local",
+  "version": "1.0.0",
+  "description": "Local deployment server for Packlane 3D Box & Packaging Designer",
+  "main": "deploy-local.js",
+  "scripts": {
+    "start": "node deploy-local.js"
+  },
+  "keywords": [
+    "packlane",
+    "packaging-editor",
+    "box-designer",
+    "local-server"
+  ],
+  "author": "",
+  "license": "ISC"
+}

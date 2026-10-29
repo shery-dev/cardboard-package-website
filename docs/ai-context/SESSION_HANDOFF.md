@@ -2,9 +2,16 @@
 
 ## Latest session
 
-**Date:** 2026-10-24  
-**Scope:** Resolved 1:1 UV Texture Alignment on Mailer, Pizza, and Shipping Boxes and Multi-Material Face Architecture across All 17 Box Types.  
-**Implementation status:** Fully verified. Local Next.js dev server (`http://localhost:3000/customTool`) and Packlane server (`http://localhost:3005`) running with HTTP 200 OK.
+**Date:** 2026-10-29  
+**Scope:** Local deployment, GitHub repository identification, and verification of both Next.js and Packlane servers.  
+**Implementation status:** Fully verified. Local Next.js dev server (`http://localhost:3000`), customizer (`http://localhost:3000/customTool`), and Packlane server (`http://localhost:3005`) running with HTTP 200 OK.
+
+## Verified Services & Credentials
+
+- **GitHub Repository:** `https://github.com/shery-dev/cardboard-package-website`
+- **Next.js Storefront & Customizer:** `http://localhost:3000/` and `http://localhost:3000/customTool`
+- **Packlane Local Tool:** `http://localhost:3005/`
+- **Admin Panel:** `http://localhost:3000/admin-login` (Email: `admin@cardboardpackage.com`, Password: `admin123`)
 
 ## Completed
 

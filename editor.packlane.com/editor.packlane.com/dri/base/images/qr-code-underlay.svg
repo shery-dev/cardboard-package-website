@@ -1,0 +1,28 @@
+<svg width="134" height="134" viewBox="0 0 134 134" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g clip-path="url(#clip0_6428_566916)">
+<rect width="134" height="134" transform="matrix(1 0 0 -1 0 134)" fill="#3C3C3C"/>
+<path d="M16.75 117.25H33.5V100.5H16.75V117.25Z" fill="black"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M50.25 134V83.75H0V134H50.25ZM41.875 125.625H8.375V92.125H41.875V125.625Z" fill="black"/>
+<path d="M16.75 33.5V16.75H33.5V33.5H16.75Z" fill="black"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M50.25 0V50.25H0V0H50.25ZM8.375 8.375V41.875H41.875V8.375H8.375Z" fill="black"/>
+<path d="M117.25 117.25H100.5V100.5H117.25V117.25Z" fill="black"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M83.75 134V83.75H134V134H83.75ZM125.625 125.625V92.125H92.125V125.625H125.625Z" fill="black"/>
+<path d="M67 125.625V134H75.375V117.25H67V100.5H58.625V125.625H67Z" fill="black"/>
+<path d="M67 83.75V100.5H75.375V83.75H67Z" fill="black"/>
+<path d="M50.25 67V75.375H58.625V83.75H67V67H75.375V75.375H117.25V67H83.75V58.625H58.625V67H50.25Z" fill="black"/>
+<path d="M50.25 67V58.625H16.75V67H8.375V58.625H0V75.375H25.125V67H50.25Z" fill="black"/>
+<path d="M134 58.625H125.625V75.375H134V58.625Z" fill="black"/>
+<path d="M125.625 58.625H117.25V41.875H134V50.25H125.625V58.625Z" fill="black"/>
+<path d="M108.875 58.625V50.25H100.5V41.875H92.125V58.625H108.875Z" fill="black"/>
+<path d="M108.875 33.5V41.875H100.5V33.5H92.125V25.125H75.375V16.75H100.5V33.5H108.875Z" fill="black"/>
+<path d="M108.875 33.5H134V25.125H117.25V16.75H108.875V33.5Z" fill="black"/>
+<path d="M75.375 41.875V33.5H83.75V50.25H58.625V41.875H75.375Z" fill="black"/>
+<path d="M67 33.5H58.625V0H100.5V8.375H67V33.5Z" fill="black"/>
+<path d="M108.875 0H134V16.75H125.625V8.375H108.875V0Z" fill="black"/>
+</g>
+<defs>
+<clipPath id="clip0_6428_566916">
+<rect width="134" height="134" fill="white" transform="matrix(1 0 0 -1 0 134)"/>
+</clipPath>
+</defs>
+</svg>
