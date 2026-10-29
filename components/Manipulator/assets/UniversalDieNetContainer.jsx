@@ -43,6 +43,8 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
   const svgRef = useRef(null);
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
+  const imageObjectsRef = useRef(new Map());
+  const currentBlobUrlRef = useRef(null);
 
   const {
     extTexColor,
@@ -101,6 +103,28 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
   const wid = Number(selectedSize?.width) || activeBoxPreset?.defaultSize?.width || 10;
   const dep = Number(selectedSize?.depth) || activeBoxPreset?.defaultSize?.depth || 4;
 
+  const getInitialPositionForSection = (section) => {
+    switch (section) {
+      case 'top':
+      case 'lid':
+      case 'lidTop':
+      case 'lidFront':
+        return presetId === 'pizzaSlice' ? { x: 270, y: 150 } : { x: 270, y: 90 };
+      case 'front':
+        return presetId === 'ration' || presetId === 'carton' ? { x: 210, y: 190 } : { x: 270, y: 330 };
+      case 'back':
+        return presetId === 'ration' || presetId === 'carton' ? { x: 450, y: 190 } : { x: 270, y: 165 };
+      case 'left':
+        return presetId === 'ration' || presetId === 'carton' ? { x: 90, y: 190 } : { x: 130, y: 240 };
+      case 'right':
+        return presetId === 'ration' || presetId === 'carton' ? { x: 330, y: 190 } : { x: 410, y: 240 };
+      case 'bottom':
+        return presetId === 'pizzaSlice' ? { x: 270, y: 320 } : { x: 270, y: 250 };
+      default:
+        return presetId === 'pizzaSlice' ? { x: 270, y: 150 } : { x: 270, y: 90 };
+    }
+  };
+
   // Convert rendered flat die net into exact 3D texture blob with 1:1 UV alignment
   const convertSvgToJpg = useCallback(() => {
     const canvas = canvasRef.current;
@@ -109,6 +133,7 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
     if (!ctx) return;
 
     const baseColor = extTexColor || '#C7A882';
+    const hasArt = (images && Object.keys(images).length > 0) || (textElements && Object.keys(textElements).length > 0);
 
     // 1. Mailer Box: exact square 2048x2048 unwrap matching MailerBox.glb UVs (245.76 square space)
     if (presetId === 'mailerBox') {
@@ -117,7 +142,6 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
       canvas.width = exportWidth;
       canvas.height = exportHeight;
 
-      // Fill base background
       ctx.fillStyle = baseColor;
       ctx.fillRect(0, 0, exportWidth, exportHeight);
 
@@ -143,36 +167,99 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
         );
       });
 
-      // Render user custom text if present
+      const mapMailerCoords = (cx, cy, w, h) => {
+        if (cx >= 190 && cx <= 350 && cy >= 40 && cy <= 140) {
+          const rx = (cx - 190) / 160;
+          const ry = (cy - 40) / 100;
+          return {
+            x: (98.81 + rx * 48.1) * scale,
+            y: (52.44 + ry * 44.54) * scale,
+            w: (w / 160) * 48.1 * scale,
+            h: (h / 100) * 44.54 * scale,
+          };
+        } else if (cx >= 190 && cx <= 350 && cy >= 190 && cy <= 310) {
+          const rx = (cx - 190) / 160;
+          const ry = (cy - 190) / 120;
+          return {
+            x: (98.81 + rx * 48.1) * scale,
+            y: (148.24 + ry * 46.07) * scale,
+            w: (w / 160) * 48.1 * scale,
+            h: (h / 120) * 46.07 * scale,
+          };
+        } else if (cx >= 190 && cx <= 350 && cy >= 310 && cy <= 360) {
+          const rx = (cx - 190) / 160;
+          const ry = (cy - 310) / 50;
+          return {
+            x: (98.81 + rx * 48.1) * scale,
+            y: (196.24 + ry * 45.56) * scale,
+            w: (w / 160) * 48.1 * scale,
+            h: (h / 50) * 45.56 * scale,
+          };
+        } else if (cx >= 190 && cx <= 350 && cy >= 140 && cy <= 190) {
+          const rx = (cx - 190) / 160;
+          const ry = (cy - 140) / 50;
+          return {
+            x: (98.81 + rx * 48.1) * scale,
+            y: (101.66 + ry * 43.73) * scale,
+            w: (w / 160) * 48.1 * scale,
+            h: (h / 50) * 43.73 * scale,
+          };
+        } else if (cx >= 350 && cx <= 430 && cy >= 190 && cy <= 310) {
+          const rx = (cx - 350) / 80;
+          const ry = (cy - 190) / 120;
+          return {
+            x: (147.93 + rx * 48.97) * scale,
+            y: (148.24 + ry * 45.81) * scale,
+            w: (w / 80) * 48.97 * scale,
+            h: (h / 120) * 45.81 * scale,
+          };
+        } else if (cx >= 110 && cx <= 190 && cy >= 190 && cy <= 310) {
+          const rx = (cx - 110) / 80;
+          const ry = (cy - 190) / 120;
+          return {
+            x: (45.58 + rx * 51.71) * scale,
+            y: (148.24 + ry * 46.07) * scale,
+            w: (w / 80) * 51.71 * scale,
+            h: (h / 120) * 46.07 * scale,
+          };
+        }
+        return {
+          x: (cx / 540) * exportWidth,
+          y: (cy / 440) * exportHeight,
+          w: (w / 540) * exportWidth,
+          h: (h / 440) * exportHeight,
+        };
+      };
+
+      if (images && Object.keys(images).length > 0) {
+        Object.keys(images).forEach((k) => {
+          const imgObj = imageObjectsRef.current.get(k);
+          if (!imgObj || !imgObj.complete || !imgObj.naturalWidth) return;
+          const pos = imagePositions[k] || { x: 0, y: 0 };
+          const size = imageSizes[k] || { width: 100, height: 100 };
+          const rot = imageRotations[k] || 0;
+          const mapped = mapMailerCoords(pos.x + size.width / 2, pos.y + size.height / 2, size.width, size.height);
+          ctx.save();
+          ctx.translate(mapped.x, mapped.y);
+          ctx.rotate((rot * Math.PI) / 180);
+          ctx.drawImage(imgObj, -mapped.w / 2, -mapped.h / 2, mapped.w, mapped.h);
+          ctx.restore();
+        });
+      }
+
       if (textElements && Object.keys(textElements).length > 0) {
         Object.values(textElements).forEach((t) => {
-          if (!t) return;
-          let targetX = (t.x / 540) * exportWidth;
-          let targetY = (t.y / 440) * exportHeight;
-          if (t.x >= 190 && t.x <= 350 && t.y >= 40 && t.y <= 140) {
-            const rx = (t.x - 190) / 160;
-            const ry = (t.y - 40) / 100;
-            targetX = (98.81 + rx * 48.1) * scale;
-            targetY = (52.44 + ry * 44.54) * scale;
-          } else if (t.x >= 190 && t.x <= 350 && t.y >= 190 && t.y <= 310) {
-            const rx = (t.x - 190) / 160;
-            const ry = (t.y - 190) / 120;
-            targetX = (98.81 + rx * 48.1) * scale;
-            targetY = (148.24 + ry * 46.07) * scale;
-          } else if (t.x >= 190 && t.x <= 350 && t.y >= 310 && t.y <= 360) {
-            const rx = (t.x - 190) / 160;
-            const ry = (t.y - 310) / 50;
-            targetX = (98.81 + rx * 48.1) * scale;
-            targetY = (196.24 + ry * 45.56) * scale;
-          }
+          if (!t || !t.text) return;
+          const mapped = mapMailerCoords(t.x, t.y, 100, 100);
           ctx.save();
-          ctx.translate(targetX, targetY);
+          ctx.translate(mapped.x, mapped.y);
           ctx.rotate(((t.rotation || 0) * Math.PI) / 180);
-          ctx.font = `${t.isBold ? 'bold ' : ''}${t.isItalic ? 'italic ' : ''}${Math.round((t.fontSize || 20) * (scale / 2.5))}px ${t.fontFamily || 'sans-serif'}`;
+          const fontSize = Math.round((t.fontSize || 20) * (scale / 2.5));
+          ctx.font = `${t.isItalic ? 'italic ' : ''}${t.isBold ? 'bold ' : ''}${fontSize}px ${t.fontFamily || 'sans-serif'}`;
           ctx.fillStyle = t.color || '#2B211B';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(t.text || '', 0, 0);
+          ctx.fillText(t.text, 0, 0);
           ctx.restore();
         });
       }
@@ -180,6 +267,8 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
       canvas.toBlob((blob) => {
         if (!blob) return;
         const blobUrl = URL.createObjectURL(blob);
+        if (currentBlobUrlRef.current) URL.revokeObjectURL(currentBlobUrlRef.current);
+        currentBlobUrlRef.current = blobUrl;
         setExtTexImgBlob(blobUrl);
       }, 'image/jpeg', 0.95);
       return;
@@ -218,9 +307,81 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
         );
       });
 
+      const mapPizzaCoords = (cx, cy, w, h) => {
+        if (cx >= 170 && cx <= 370 && cy >= 30 && cy <= 190) {
+          const rx = (cx - 170) / 200;
+          const ry = (cy - 30) / 160;
+          return {
+            x: (11.05 + rx * 191.59) * scaleX,
+            y: (29.32 + ry * 149.69) * scaleY,
+            w: (w / 200) * 191.59 * scaleX,
+            h: (h / 160) * 149.69 * scaleY,
+          };
+        } else if (cx >= 170 && cx <= 370 && cy >= 220 && cy <= 380) {
+          const rx = (cx - 170) / 200;
+          const ry = (cy - 220) / 160;
+          return {
+            x: (11.05 + rx * 189.15) * scaleX,
+            y: (215.22 + ry * 148.88) * scaleY,
+            w: (w / 200) * 189.15 * scaleX,
+            h: (h / 160) * 148.88 * scaleY,
+          };
+        } else if (cx >= 170 && cx <= 370 && cy >= 380 && cy <= 420) {
+          const rx = (cx - 170) / 200;
+          const ry = (cy - 380) / 40;
+          return {
+            x: (28.14 + rx * 158.09) * scaleX,
+            y: (365.73 + ry * 30.27) * scaleY,
+            w: (w / 200) * 158.09 * scaleX,
+            h: (h / 40) * 30.27 * scaleY,
+          };
+        }
+        return {
+          x: (cx / 540) * exportWidth,
+          y: (cy / 440) * exportHeight,
+          w: (w / 540) * exportWidth,
+          h: (h / 440) * exportHeight,
+        };
+      };
+
+      if (images && Object.keys(images).length > 0) {
+        Object.keys(images).forEach((k) => {
+          const imgObj = imageObjectsRef.current.get(k);
+          if (!imgObj || !imgObj.complete || !imgObj.naturalWidth) return;
+          const pos = imagePositions[k] || { x: 0, y: 0 };
+          const size = imageSizes[k] || { width: 100, height: 100 };
+          const rot = imageRotations[k] || 0;
+          const mapped = mapPizzaCoords(pos.x + size.width / 2, pos.y + size.height / 2, size.width, size.height);
+          ctx.save();
+          ctx.translate(mapped.x, mapped.y);
+          ctx.rotate((rot * Math.PI) / 180);
+          ctx.drawImage(imgObj, -mapped.w / 2, -mapped.h / 2, mapped.w, mapped.h);
+          ctx.restore();
+        });
+      }
+
+      if (textElements && Object.keys(textElements).length > 0) {
+        Object.values(textElements).forEach((t) => {
+          if (!t || !t.text) return;
+          const mapped = mapPizzaCoords(t.x, t.y, 100, 100);
+          ctx.save();
+          ctx.translate(mapped.x, mapped.y);
+          ctx.rotate(((t.rotation || 0) * Math.PI) / 180);
+          const fontSize = Math.round((t.fontSize || 20) * (scaleX / 1.8));
+          ctx.font = `${t.isItalic ? 'italic ' : ''}${t.isBold ? 'bold ' : ''}${fontSize}px ${t.fontFamily || 'sans-serif'}`;
+          ctx.fillStyle = t.color || '#2B211B';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(t.text, 0, 0);
+          ctx.restore();
+        });
+      }
+
       canvas.toBlob((blob) => {
         if (!blob) return;
         const blobUrl = URL.createObjectURL(blob);
+        if (currentBlobUrlRef.current) URL.revokeObjectURL(currentBlobUrlRef.current);
+        currentBlobUrlRef.current = blobUrl;
         setExtTexImgBlob(blobUrl);
       }, 'image/jpeg', 0.95);
       return;
@@ -256,57 +417,260 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
         );
       });
 
+      const mapShippingCoords = (cx, cy, w, h) => {
+        if (cx >= 140 && cx <= 280 && cy >= 100 && cy <= 280) {
+          const rx = (cx - 140) / 140;
+          const ry = (cy - 100) / 180;
+          return {
+            x: 530.1 + rx * 415,
+            y: 312.1 + ry * 453.2,
+            w: (w / 140) * 415,
+            h: (h / 180) * 453.2,
+          };
+        } else if (cx >= 280 && cx <= 380 && cy >= 100 && cy <= 280) {
+          const rx = (cx - 280) / 100;
+          const ry = (cy - 100) / 180;
+          return {
+            x: 968.1 + rx * 509.6,
+            y: 312.1 + ry * 453.5,
+            w: (w / 100) * 509.6,
+            h: (h / 180) * 453.5,
+          };
+        } else if (cx >= 380 && cx <= 520 && cy >= 100 && cy <= 280) {
+          const rx = (cx - 380) / 140;
+          const ry = (cy - 100) / 180;
+          return {
+            x: 1489.7 + rx * 415,
+            y: 312.2 + ry * 453.1,
+            w: (w / 140) * 415,
+            h: (h / 180) * 453.1,
+          };
+        } else if (cx >= 40 && cx <= 140 && cy >= 100 && cy <= 280) {
+          const rx = (cx - 40) / 100;
+          const ry = (cy - 100) / 180;
+          return {
+            x: 8.5 + rx * 509.6,
+            y: 312.1 + ry * 453.4,
+            w: (w / 100) * 509.6,
+            h: (h / 180) * 453.4,
+          };
+        }
+        return {
+          x: (cx / 540) * exportWidth,
+          y: (cy / 440) * exportHeight,
+          w: (w / 540) * exportWidth,
+          h: (h / 440) * exportHeight,
+        };
+      };
+
+      if (images && Object.keys(images).length > 0) {
+        Object.keys(images).forEach((k) => {
+          const imgObj = imageObjectsRef.current.get(k);
+          if (!imgObj || !imgObj.complete || !imgObj.naturalWidth) return;
+          const pos = imagePositions[k] || { x: 0, y: 0 };
+          const size = imageSizes[k] || { width: 100, height: 100 };
+          const rot = imageRotations[k] || 0;
+          const mapped = mapShippingCoords(pos.x + size.width / 2, pos.y + size.height / 2, size.width, size.height);
+          ctx.save();
+          ctx.translate(mapped.x, mapped.y);
+          ctx.rotate((rot * Math.PI) / 180);
+          ctx.drawImage(imgObj, -mapped.w / 2, -mapped.h / 2, mapped.w, mapped.h);
+          ctx.restore();
+        });
+      }
+
+      if (textElements && Object.keys(textElements).length > 0) {
+        Object.values(textElements).forEach((t) => {
+          if (!t || !t.text) return;
+          const mapped = mapShippingCoords(t.x, t.y, 100, 100);
+          ctx.save();
+          ctx.translate(mapped.x, mapped.y);
+          ctx.rotate(((t.rotation || 0) * Math.PI) / 180);
+          const fontSize = Math.round((t.fontSize || 20) * 3);
+          ctx.font = `${t.isItalic ? 'italic ' : ''}${t.isBold ? 'bold ' : ''}${fontSize}px ${t.fontFamily || 'sans-serif'}`;
+          ctx.fillStyle = t.color || '#2B211B';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(t.text, 0, 0);
+          ctx.restore();
+        });
+      }
+
       canvas.toBlob((blob) => {
         if (!blob) return;
         const blobUrl = URL.createObjectURL(blob);
+        if (currentBlobUrlRef.current) URL.revokeObjectURL(currentBlobUrlRef.current);
+        currentBlobUrlRef.current = blobUrl;
         setExtTexImgBlob(blobUrl);
       }, 'image/jpeg', 0.95);
       return;
     }
 
-    // 4. For all other 14 box types, panel colors are rendered directly onto 3D face geometries
-    // We only rasterize if user specifically added user typography or uploaded art
-    const svgElement = svgRef.current;
-    if (!svgElement) return;
-    const hasCustomUserArt = (images && Object.keys(images).length > 0) || (textElements && Object.keys(textElements).length > 0);
-    if (!hasCustomUserArt) return;
+    // 4. For all other 14 box types (DynamicBoxModel, PizzaSliceBox, CakeBox, KraftPaperBag)
+    if (!hasArt) {
+      if (currentBlobUrlRef.current) {
+        URL.revokeObjectURL(currentBlobUrlRef.current);
+        currentBlobUrlRef.current = null;
+      }
+      setExtTexImgBlob(null);
+      return;
+    }
 
-    const clonedSvg = svgElement.cloneNode(true);
-    clonedSvg.setAttribute('width', '2048');
-    clonedSvg.setAttribute('height', '2048');
-    clonedSvg.querySelectorAll('text:not(.user-custom-text)').forEach((t) => (t.style.display = 'none'));
-    clonedSvg.querySelectorAll('line').forEach((l) => (l.style.display = 'none'));
-    clonedSvg.querySelectorAll('polygon, rect, path').forEach((p) => {
-      p.setAttribute('stroke', 'none');
-    });
+    const exportWidth = 2048;
+    const exportHeight = 2048;
+    canvas.width = exportWidth;
+    canvas.height = exportHeight;
 
-    const svgData = new XMLSerializer().serializeToString(clonedSvg);
-    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(svgBlob);
-    const img = new Image();
-    img.onload = () => {
-      ctx.clearRect(0, 0, 2048, 2048);
-      ctx.fillStyle = baseColor;
-      ctx.fillRect(0, 0, 2048, 2048);
-      ctx.drawImage(img, 0, 0, 2048, 2048);
-      canvas.toBlob((blob) => {
-        if (!blob) return;
-        const blobUrl = URL.createObjectURL(blob);
-        setExtTexImgBlob(blobUrl);
-        URL.revokeObjectURL(url);
-      }, 'image/jpeg', 0.95);
-    };
-    img.src = url;
-  }, [presetId, extTexColor, sideColors, setExtTexImgBlob, images, textElements]);
+    ctx.fillStyle = baseColor;
+    ctx.fillRect(0, 0, exportWidth, exportHeight);
+
+    const scaleX = exportWidth / VIEWBOX_WIDTH;
+    const scaleY = exportHeight / VIEWBOX_HEIGHT;
+
+    if (presetId === 'pizzaSlice') {
+      // Triangular Top Lid: (270, 30), (150, 220), (390, 220)
+      ctx.fillStyle = sideColors.top || baseColor;
+      ctx.beginPath();
+      ctx.moveTo(270 * scaleX, 30 * scaleY);
+      ctx.lineTo(150 * scaleX, 220 * scaleY);
+      ctx.lineTo(390 * scaleX, 220 * scaleY);
+      ctx.closePath();
+      ctx.fill();
+
+      // Back Crust: (150, 220, 240, 42)
+      ctx.fillStyle = sideColors.back || baseColor;
+      ctx.fillRect(150 * scaleX, 220 * scaleY, 240 * scaleX, 42 * scaleY);
+
+      // Triangular Base Tray: (270, 410), (150, 262), (390, 262)
+      ctx.fillStyle = sideColors.bottom || baseColor;
+      ctx.beginPath();
+      ctx.moveTo(270 * scaleX, 410 * scaleY);
+      ctx.lineTo(150 * scaleX, 262 * scaleY);
+      ctx.lineTo(390 * scaleX, 262 * scaleY);
+      ctx.closePath();
+      ctx.fill();
+
+      // Left wing: (150, 220), (150, 262), (60, 262)
+      ctx.fillStyle = sideColors.left || baseColor;
+      ctx.beginPath();
+      ctx.moveTo(150 * scaleX, 220 * scaleY);
+      ctx.lineTo(150 * scaleX, 262 * scaleY);
+      ctx.lineTo(60 * scaleX, 262 * scaleY);
+      ctx.closePath();
+      ctx.fill();
+
+      // Right wing: (390, 220), (390, 262), (480, 262)
+      ctx.fillStyle = sideColors.right || baseColor;
+      ctx.beginPath();
+      ctx.moveTo(390 * scaleX, 220 * scaleY);
+      ctx.lineTo(390 * scaleX, 262 * scaleY);
+      ctx.lineTo(480 * scaleX, 262 * scaleY);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      const panels = [
+        { key: 'left', x: 40, y: 100, w: 100, h: 180 },
+        { key: 'front', x: 140, y: 100, w: 140, h: 180 },
+        { key: 'right', x: 280, y: 100, w: 100, h: 180 },
+        { key: 'back', x: 380, y: 100, w: 140, h: 180 },
+        { key: 'top', x: 140, y: 30, w: 140, h: 70 },
+        { key: 'bottom', x: 140, y: 280, w: 140, h: 70 },
+      ];
+      panels.forEach((p) => {
+        ctx.fillStyle = sideColors[p.key] || baseColor;
+        ctx.fillRect(p.x * scaleX, p.y * scaleY, p.w * scaleX, p.h * scaleY);
+      });
+    }
+
+    if (images && Object.keys(images).length > 0) {
+      Object.keys(images).forEach((k) => {
+        const imgObj = imageObjectsRef.current.get(k);
+        if (!imgObj || !imgObj.complete || !imgObj.naturalWidth) return;
+        const pos = imagePositions[k] || { x: 0, y: 0 };
+        const size = imageSizes[k] || { width: 100, height: 100 };
+        const rot = imageRotations[k] || 0;
+        const cx = (pos.x + size.width / 2) * scaleX;
+        const cy = (pos.y + size.height / 2) * scaleY;
+        const dw = size.width * scaleX;
+        const dh = size.height * scaleY;
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate((rot * Math.PI) / 180);
+        ctx.drawImage(imgObj, -dw / 2, -dh / 2, dw, dh);
+        ctx.restore();
+      });
+    }
+
+    if (textElements && Object.keys(textElements).length > 0) {
+      Object.values(textElements).forEach((t) => {
+        if (!t || !t.text) return;
+        const cx = t.x * scaleX;
+        const cy = t.y * scaleY;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(((t.rotation || 0) * Math.PI) / 180);
+        const fontSize = Math.round((t.fontSize || 20) * scaleX);
+        ctx.font = `${t.isItalic ? 'italic ' : ''}${t.isBold ? 'bold ' : ''}${fontSize}px ${t.fontFamily || 'sans-serif'}`;
+        ctx.fillStyle = t.color || '#2B211B';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(t.text, 0, 0);
+        ctx.restore();
+      });
+    }
+
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const blobUrl = URL.createObjectURL(blob);
+      if (currentBlobUrlRef.current) URL.revokeObjectURL(currentBlobUrlRef.current);
+      currentBlobUrlRef.current = blobUrl;
+      setExtTexImgBlob(blobUrl);
+    }, 'image/jpeg', 0.95);
+  }, [presetId, extTexColor, sideColors, setExtTexImgBlob, images, textElements, imagePositions, imageSizes, imageRotations]);
 
   useEffect(() => {
-    if (presetId === 'mailerBox' || presetId === 'pizzaBox' || presetId === 'carton') {
-      const timer = setTimeout(() => {
-        convertSvgToJpg();
-      }, 100);
-      return () => clearTimeout(timer);
+    if (!images) return;
+    let anyNew = false;
+    Object.entries(images).forEach(([key, src]) => {
+      const existing = imageObjectsRef.current.get(key);
+      if (!existing || existing.src !== src) {
+        anyNew = true;
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          imageObjectsRef.current.set(key, img);
+          convertSvgToJpg();
+        };
+        img.src = src;
+        imageObjectsRef.current.set(key, img);
+      }
+    });
+    for (const key of imageObjectsRef.current.keys()) {
+      if (!images[key]) {
+        imageObjectsRef.current.delete(key);
+      }
     }
-  }, [presetId, convertSvgToJpg]);
+    if (!anyNew) {
+      convertSvgToJpg();
+    }
+  }, [images, convertSvgToJpg]);
+
+  useEffect(() => {
+    return () => {
+      if (currentBlobUrlRef.current) {
+        URL.revokeObjectURL(currentBlobUrlRef.current);
+        currentBlobUrlRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      convertSvgToJpg();
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [presetId, textElements, sideColors, extTexColor, convertSvgToJpg]);
 
   const applyDesignTo3D = () => {
     setApplied(true);
@@ -399,17 +763,30 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
     reader.onload = (e) => {
       const timeInstant = Date.now();
       const key = `img-${timeInstant}`;
-      const defaultSize = 110;
-      const x = VIEWBOX_WIDTH / 2 - defaultSize / 2;
-      const y = VIEWBOX_HEIGHT / 2 - defaultSize / 2;
+      const defaultSize = 100;
+      const initialPos = getInitialPositionForSection(selectedSection);
+      const x = Math.max(MARGIN, initialPos.x - defaultSize / 2);
+      const y = Math.max(MARGIN, initialPos.y - defaultSize / 2);
 
-      setImages((prev) => ({ ...prev, [key]: e.target.result }));
+      const src = e.target.result;
+      const imgObj = new Image();
+      imgObj.crossOrigin = 'anonymous';
+      imgObj.onload = () => {
+        imageObjectsRef.current.set(key, imgObj);
+        convertSvgToJpg();
+      };
+      imgObj.src = src;
+      imageObjectsRef.current.set(key, imgObj);
+
+      setImages((prev) => ({ ...prev, [key]: src }));
       setImagePositions((prev) => ({ ...prev, [key]: { x, y } }));
       setImageSizes((prev) => ({ ...prev, [key]: { width: defaultSize, height: defaultSize } }));
       setImageRotations((prev) => ({ ...prev, [key]: 0 }));
       setSelectedImage(key);
+      setSelectedTextId(null);
+      setSelectedItem('images');
       event.target.value = null;
-      setTimeout(() => convertSvgToJpg(), 250);
+      setTimeout(() => convertSvgToJpg(), 150);
     };
     reader.readAsDataURL(file);
   };
@@ -417,8 +794,9 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
   // Custom Text handlers
   const handleAddText = () => {
     const id = `txt-${Date.now()}`;
-    const x = VIEWBOX_WIDTH / 2;
-    const y = VIEWBOX_HEIGHT / 2;
+    const initialPos = getInitialPositionForSection(selectedSection);
+    const x = initialPos.x;
+    const y = initialPos.y;
     if (setTextElements) {
       setTextElements((prev) => ({
         ...prev,
@@ -439,7 +817,7 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
     setSelectedTextId(id);
     setSelectedImage(null);
     setSelectedItem('text');
-    setTimeout(() => convertSvgToJpg(), 250);
+    setTimeout(() => convertSvgToJpg(), 150);
   };
 
   const updateSelectedText = (updates) => {
@@ -451,7 +829,7 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
         ...updates,
       },
     }));
-    setTimeout(() => convertSvgToJpg(), 200);
+    setTimeout(() => convertSvgToJpg(), 150);
   };
 
   const handleDeleteText = () => {
@@ -463,7 +841,7 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
       return n;
     });
     setSelectedTextId(null);
-    setTimeout(() => convertSvgToJpg(), 200);
+    setTimeout(() => convertSvgToJpg(), 150);
   };
 
   const handleTextRotate = (degrees) => {
@@ -474,10 +852,10 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
 
   // Drag, Resize, and Rotate Handlers for Images
   const handleMouseDown = (event, id) => {
-    if (selectedItem !== 'images') return;
     event.stopPropagation();
     setSelectedImage(id);
     setSelectedTextId(null);
+    setSelectedItem('images');
     setDragging(true);
     const svgRect = svgRef.current.getBoundingClientRect();
     const scaleX = VIEWBOX_WIDTH / svgRect.width;
@@ -747,7 +1125,7 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
               <input
                 type="number"
                 min="10"
-                max="60"
+                max="80"
                 value={activeTextObj ? activeTextObj.fontSize : selectedFontSize}
                 onChange={(e) => {
                   const val = Number(e.target.value) || 20;
@@ -757,6 +1135,37 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
                 className="w-12 px-1 py-1 text-xs border border-[#DCCFC2] rounded-md bg-white text-center font-mono"
               />
             </div>
+            {/* Bold and Italic toggles */}
+            <button
+              type="button"
+              onClick={() => {
+                if (activeTextObj) updateSelectedText({ isBold: !activeTextObj.isBold });
+                else setIsBold(!isBold);
+              }}
+              className={`px-2 py-1 text-xs font-bold rounded border ${
+                (activeTextObj ? activeTextObj.isBold : isBold)
+                  ? 'bg-[#2B211B] text-white border-[#2B211B]'
+                  : 'bg-white text-gray-700 border-gray-300'
+              }`}
+              title="Bold"
+            >
+              B
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (activeTextObj) updateSelectedText({ isItalic: !activeTextObj.isItalic });
+                else setIsItalic(!isItalic);
+              }}
+              className={`px-2 py-1 text-xs italic font-serif rounded border ${
+                (activeTextObj ? activeTextObj.isItalic : isItalic)
+                  ? 'bg-[#2B211B] text-white border-[#2B211B]'
+                  : 'bg-white text-gray-700 border-gray-300'
+              }`}
+              title="Italic"
+            >
+              I
+            </button>
             <input
               type="color"
               value={activeTextObj ? activeTextObj.color : selectedTextColor}
@@ -793,6 +1202,14 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
                   title="Delete Text"
                 >
                   <FaTrash className="w-3 h-3" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddText}
+                  className="px-2 py-1 text-xs font-semibold rounded bg-[#2B211B] text-[#FFFDFC] hover:bg-[#A94F32] transition-colors shadow-2xs"
+                  title="Add another text"
+                >
+                  + New
                 </button>
                 <button
                   type="button"
@@ -927,9 +1344,11 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
           xmlns="http://www.w3.org/2000/svg"
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
-          onClick={() => {
-            if (selectedItem === 'images') setSelectedImage(null);
-            if (selectedItem === 'text') setSelectedTextId(null);
+          onClick={(e) => {
+            if (e.target === svgRef.current) {
+              setSelectedImage(null);
+              setSelectedTextId(null);
+            }
           }}
         >
           {/* Render Active Preset's Authentic Unfolded CAD Flat Die Net */}
@@ -951,6 +1370,7 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
             const rot = imageRotations[key] || 0;
             const cx = pos.x + size.width / 2;
             const cy = pos.y + size.height / 2;
+            const isSelected = selectedImage === key;
 
             return (
               <g key={key}>
@@ -962,10 +1382,16 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
                   height={size.height}
                   transform={`rotate(${rot}, ${cx}, ${cy})`}
                   onMouseDown={(e) => handleMouseDown(e, key)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedImage(key);
+                    setSelectedTextId(null);
+                    setSelectedItem('images');
+                  }}
                   className="cursor-move"
                 />
-                {selectedItem === 'images' && selectedImage === key && (
-                  <g transform={`rotate(${rot}, ${cx}, ${cy})`}>
+                {isSelected && (
+                  <g transform={`rotate(${rot}, ${cx}, ${cy})`} onClick={(e) => e.stopPropagation()}>
                     {/* Bounding box outline */}
                     <rect
                       x={pos.x}
@@ -974,29 +1400,36 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
                       height={size.height}
                       fill="none"
                       stroke="#2563EB"
-                      strokeWidth="1.5"
+                      strokeWidth="2"
                       strokeDasharray="4 2"
+                      pointerEvents="none"
                     />
                     {/* Resize handle bottom-right */}
                     <rect
-                      x={pos.x + size.width - 6}
-                      y={pos.y + size.height - 6}
-                      width="12"
-                      height="12"
+                      x={pos.x + size.width - 7}
+                      y={pos.y + size.height - 7}
+                      width="14"
+                      height="14"
                       fill="#2563EB"
+                      stroke="#FFFFFF"
+                      strokeWidth="1.5"
                       cursor="nwse-resize"
                       onMouseDown={(e) => { e.stopPropagation(); setResizing(true); }}
+                      onClick={(e) => e.stopPropagation()}
                     />
                     {/* Rotate handle top center */}
                     <circle
                       cx={cx}
                       cy={pos.y - 14}
-                      r="7"
+                      r="8"
                       fill="#DC2626"
+                      stroke="#FFFFFF"
+                      strokeWidth="1.5"
                       cursor="crosshair"
                       onMouseDown={(e) => { e.stopPropagation(); setRotating(true); }}
+                      onClick={(e) => e.stopPropagation()}
                     />
-                    <line x1={cx} y1={pos.y} x2={cx} y2={pos.y - 14} stroke="#DC2626" strokeWidth="1" />
+                    <line x1={cx} y1={pos.y} x2={cx} y2={pos.y - 14} stroke="#DC2626" strokeWidth="1.5" pointerEvents="none" />
                   </g>
                 )}
               </g>
@@ -1007,12 +1440,18 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
           {Object.keys(textElements || {}).map((key) => {
             const t = textElements[key];
             if (!t) return null;
-            const isSelected = selectedItem === 'text' && selectedTextId === key;
+            const isSelected = selectedTextId === key;
             return (
               <g
                 key={key}
                 transform={`rotate(${t.rotation || 0}, ${t.x}, ${t.y})`}
                 onMouseDown={(e) => handleTextMouseDown(e, key)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedTextId(key);
+                  setSelectedImage(null);
+                  setSelectedItem('text');
+                }}
                 className="cursor-move select-none"
               >
                 <text
@@ -1037,7 +1476,7 @@ export default function UniversalDieNetContainer({ activeTool, isFullCanvas = fa
                     height={(t.fontSize || 20) * 1.3 + 8}
                     fill="none"
                     stroke="#2563EB"
-                    strokeWidth="1.5"
+                    strokeWidth="2"
                     strokeDasharray="4 2"
                     pointerEvents="none"
                   />

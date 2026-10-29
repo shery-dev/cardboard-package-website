@@ -3,8 +3,44 @@
 ## Latest session
 
 **Date:** 2026-10-29  
-**Scope:** Local deployment, GitHub repository identification, and verification of both Next.js and Packlane servers.  
-**Implementation status:** Fully verified. Local Next.js dev server (`http://localhost:3000`), customizer (`http://localhost:3000/customTool`), and Packlane server (`http://localhost:3005`) running with HTTP 200 OK.
+**Scope:** Resolved Text adding/editing/rendering, 1-click Image selection and transform handles, Pizza Slice Box and Kraft Paper Bag discrete face geometry groups, and High-Resolution artwork projection across all 17 box types.  
+**Implementation status:** Fully verified. Local Next.js dev server (`http://localhost:3000`), customizer (`http://localhost:3000/customTool`), preset endpoints, and Packlane server (`http://localhost:3005`) running with HTTP 200 OK.
+
+## Completed
+
+- **1-Click Image Selection and Persistent Transform Handles (`UniversalDieNetContainer.jsx`):**
+  - Stopped click event bubbling on `<image>` and transform handles so clicking an image immediately selects it, activates blue dashed selection border, nwse-resize handle, rotate handle, and movement toolbar.
+  - Corrected SVG canvas background `onClick` handler so clicking blank canvas deselects, while clicking an image, text, or transform control retains selection.
+  - Image mousedown/drag now directly activates image selection regardless of initial sidebar tool.
+- **Custom Typography & Text Feature Pipeline (`UniversalDieNetContainer.jsx`):**
+  - Added new text placement centered on the top lid or active panel (`{ x: 270, y: 90 }` instead of ground-facing y=220) so added text is instantly visible in 3D.
+  - Added "+ New" text button allowing multiple text layers without requiring manual deselection first.
+  - Added Bold (`B`) and Italic (`I`) toggles, font family select, font size input, font color picker, rotate, and delete controls.
+  - Corrected text element click propagation so clicking on canvas text selects and activates editing tools immediately.
+- **Fixed Pizza Slice Box Face Color Geometry (`PizzaSliceBox.jsx`):**
+  - Resolved exact geometry index bug in `PizzaSliceBox.glb`:
+    - Bottom (indices 0..2, count: 3)
+    - Back Crust (indices 3..8, count: 6)
+    - Left Wall (indices 9..14, count: 6)
+    - Right Wall (indices 15..20, count: 6)
+  - Synchronized `trayMaterials` with `trayMeshRef.current.material = trayMaterials` on update.
+  - Connected `extTexImgBlob` to `PizzaSliceBox` so uploaded logos and text render cleanly on the 3D triangular box.
+- **Fixed Kraft Paper Bag Face Geometry (`KraftPaperBag.jsx`):**
+  - Re-indexed 54 indices across 9 quads: Front (0..5), Back (6..11), Bottom (12..17), Left Gusset (18..29), Right Gusset (30..41), Front Rim (42..47), Back Rim (48..53).
+  - Synchronized `bagMaterials` with `bagMeshRef.current.material = bagMaterials`.
+- **Artwork & Color Pipeline Across All 17 Packaging Styles:**
+  - Connected `extTexImgBlob` to `DynamicBoxModel.jsx` (powering all 11 GLTF box styles), `CakeBox.jsx`, `KraftPaperBag.jsx`, `PizzaSliceBox.jsx`, `MailerBox.jsx`, `PizzaBox.jsx`, and `ShippingBox.jsx`.
+  - When discrete colors are used with no art, models use native multi-material geometries with zero lag or glitching.
+  - When images or text are added, `convertSvgToJpg()` generates a 2048x2048 high-res composite projection texture rendering panel colors, images, and typography directly on 3D box faces.
+
+## Files changed
+
+- `components/Manipulator/assets/UniversalDieNetContainer.jsx`
+- `components/Manipulator/3dWork/Boxes/PizzaSliceBox.jsx`
+- `components/Manipulator/3dWork/Boxes/KraftPaperBag.jsx`
+- `components/Manipulator/3dWork/Boxes/CakeBox.jsx`
+- `components/Manipulator/3dWork/Boxes/DynamicBoxModel.jsx`
+- `docs/ai-context/SESSION_HANDOFF.md`
 
 ## Verified Services & Credentials
 

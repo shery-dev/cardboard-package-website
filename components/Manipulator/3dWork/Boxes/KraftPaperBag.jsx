@@ -94,9 +94,10 @@ export function KraftPaperBag(props) {
 
   const extTexMapUrl = isFeatureShowcase
     ? (generatedFeatureTexUrl || defaultExtTex)
-    : defaultExtTex;
+    : (extTexImgBlob || defaultExtTex);
 
   const extTex = useTexture({ map: extTexMapUrl });
+  const bagMeshRef = useRef();
 
   // Handle color based on material
   const handleColor = material === 'White'
@@ -128,22 +129,21 @@ export function KraftPaperBag(props) {
   useEffect(() => {
     if (nodes?.PlaneWOA?.geometry) {
       const geom = nodes.PlaneWOA.geometry;
-      if (!geom._multiMaterialGrouped) {
-        geom.clearGroups();
-        geom.addGroup(0, 6, 0);   // Front
-        geom.addGroup(6, 6, 1);   // Back
-        geom.addGroup(12, 12, 2); // Left
-        geom.addGroup(24, 6, 3);  // Right
-        geom.addGroup(30, 6, 4);  // Bottom
-        geom._multiMaterialGrouped = true;
-      }
+      geom.clearGroups();
+      geom.addGroup(0, 6, 0);   // Front (indices 0..5)
+      geom.addGroup(6, 6, 1);   // Back (indices 6..11)
+      geom.addGroup(12, 6, 4);  // Bottom (indices 12..17)
+      geom.addGroup(18, 12, 2); // Left (indices 18..29)
+      geom.addGroup(30, 12, 3); // Right (indices 30..41)
+      geom.addGroup(42, 6, 0);  // Front top rim (indices 42..47)
+      geom.addGroup(48, 6, 1);  // Back top rim (indices 48..53)
     }
   }, [nodes]);
 
   const createFaceMat = (hex) =>
     new THREE.MeshStandardMaterial({
-      map: isFeatureShowcase ? extTex.map : extTex.map,
-      color: new THREE.Color(isFeatureShowcase ? '#FFFFFF' : hex),
+      map: extTex.map,
+      color: new THREE.Color(isFeatureShowcase || extTexImgBlob ? '#FFFFFF' : hex),
       roughness: 0.88,
       metalness: 0.02,
       side: THREE.DoubleSide,
@@ -155,7 +155,13 @@ export function KraftPaperBag(props) {
     createFaceMat(colorLeft),
     createFaceMat(colorRight),
     createFaceMat(colorBottom),
-  ], [colorFront, colorBack, colorLeft, colorRight, colorBottom, isFeatureShowcase, extTex.map]);
+  ], [colorFront, colorBack, colorLeft, colorRight, colorBottom, isFeatureShowcase, extTexImgBlob, extTex.map]);
+
+  useEffect(() => {
+    if (bagMeshRef.current) {
+      bagMeshRef.current.material = bagMaterials;
+    }
+  }, [bagMaterials]);
 
   return (
     <group
@@ -169,6 +175,7 @@ export function KraftPaperBag(props) {
         <group name="KraftBagRoot">
           {/* Main Paper Bag Body with distinct panel colors */}
           <mesh
+            ref={bagMeshRef}
             name="PlaneWOA"
             geometry={nodes.PlaneWOA.geometry}
             material={bagMaterials}

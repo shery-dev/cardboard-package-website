@@ -94,7 +94,7 @@ export function PizzaSliceBox(props) {
 
   const extTexMapUrl = isFeatureShowcase
     ? (generatedFeatureTexUrl || defaultExtTex)
-    : defaultExtTex;
+    : (extTexImgBlob || defaultExtTex);
 
   const extTex = useTexture({ map: extTexMapUrl });
 
@@ -146,21 +146,18 @@ export function PizzaSliceBox(props) {
   useEffect(() => {
     if (nodes?.Tray?.geometry) {
       const geom = nodes.Tray.geometry;
-      if (!geom._multiMaterialGrouped) {
-        geom.clearGroups();
-        geom.addGroup(0, 6, 0);  // Bottom
-        geom.addGroup(6, 6, 1);  // Back Crust
-        geom.addGroup(12, 6, 2); // Left Wall
-        geom.addGroup(18, 3, 3); // Right Wall
-        geom._multiMaterialGrouped = true;
-      }
+      geom.clearGroups();
+      geom.addGroup(0, 3, 0);   // Bottom (indices 0..2)
+      geom.addGroup(3, 6, 1);   // Back Crust (indices 3..8)
+      geom.addGroup(9, 6, 2);   // Left Wall (indices 9..14)
+      geom.addGroup(15, 6, 3);  // Right Wall (indices 15..20)
     }
   }, [nodes]);
 
   const createFaceMat = (hex) =>
     new THREE.MeshStandardMaterial({
-      map: isFeatureShowcase ? extTex.map : extTex.map,
-      color: new THREE.Color(isFeatureShowcase ? '#FFFFFF' : hex),
+      map: extTex.map,
+      color: new THREE.Color(isFeatureShowcase || extTexImgBlob ? '#FFFFFF' : hex),
       roughness: 0.85,
       metalness: 0.02,
       side: THREE.DoubleSide,
@@ -171,7 +168,13 @@ export function PizzaSliceBox(props) {
     createFaceMat(colorBack),
     createFaceMat(colorLeft),
     createFaceMat(colorRight),
-  ], [colorBottom, colorBack, colorLeft, colorRight, isFeatureShowcase, extTex.map]);
+  ], [colorBottom, colorBack, colorLeft, colorRight, isFeatureShowcase, extTexImgBlob, extTex.map]);
+
+  useEffect(() => {
+    if (trayMeshRef.current) {
+      trayMeshRef.current.material = trayMaterials;
+    }
+  }, [trayMaterials]);
 
   useEffect(() => {
     if (lidMatRef.current) {
@@ -179,10 +182,10 @@ export function PizzaSliceBox(props) {
         lidMatRef.current.map = extTex.map;
         lidMatRef.current.map.needsUpdate = true;
       }
-      lidMatRef.current.color = new THREE.Color(lidColorHex);
+      lidMatRef.current.color = new THREE.Color(isFeatureShowcase || extTexImgBlob ? '#FFFFFF' : lidColorHex);
       lidMatRef.current.needsUpdate = true;
     }
-  }, [lidColorHex, extTex.map]);
+  }, [lidColorHex, extTex.map, isFeatureShowcase, extTexImgBlob]);
 
   return (
     <group

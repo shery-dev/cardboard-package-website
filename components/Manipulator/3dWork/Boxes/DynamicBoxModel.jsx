@@ -100,7 +100,7 @@ export function DynamicBoxModel({
   // DynamicBoxModel uses realistic paper grain texture, or branded texture in feature showcase mode
   const extTexMapUrl = isFeatureShowcase
     ? (generatedFeatureTexUrl || defaultExtTex)
-    : defaultExtTex;
+    : (extTexImgBlob || defaultExtTex);
 
   const extTex = useTexture({ map: extTexMapUrl });
   const { scene } = useGLTF(glbPath);
@@ -202,7 +202,7 @@ export function DynamicBoxModel({
         const createFaceMaterial = (colorHex) =>
           new THREE.MeshStandardMaterial({
             map: activeMap,
-            color: new THREE.Color(isFeatureShowcase ? '#FFFFFF' : colorHex),
+            color: new THREE.Color(isFeatureShowcase || extTexImgBlob ? '#FFFFFF' : colorHex),
             roughness: 0.85,
             metalness: 0.02,
             side: THREE.DoubleSide,
@@ -260,7 +260,7 @@ export function DynamicBoxModel({
         }
       }
     });
-  }, [clonedScene, extTex.map, material, extTexColor, sideColors, isFeatureShowcase, lidGroupName]);
+  }, [clonedScene, extTex.map, extTexImgBlob, material, extTexColor, sideColors, isFeatureShowcase, lidGroupName]);
 
   return (
     <group

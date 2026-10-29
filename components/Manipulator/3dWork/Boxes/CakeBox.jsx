@@ -94,7 +94,7 @@ export function CakeBox(props) {
 
   const extTexMapUrl = isFeatureShowcase
     ? (generatedFeatureTexUrl || defaultExtTex)
-    : defaultExtTex;
+    : (extTexImgBlob || defaultExtTex);
 
   const extTex = useTexture({ map: extTexMapUrl });
 
@@ -161,8 +161,8 @@ export function CakeBox(props) {
 
   const createFaceMat = (hex) =>
     new THREE.MeshStandardMaterial({
-      map: isFeatureShowcase ? extTex.map : extTex.map,
-      color: new THREE.Color(isFeatureShowcase ? '#FFFFFF' : hex),
+      map: extTex.map,
+      color: new THREE.Color(isFeatureShowcase || extTexImgBlob ? '#FFFFFF' : hex),
       roughness: 0.88,
       metalness: 0.02,
       side: THREE.DoubleSide,
@@ -174,7 +174,13 @@ export function CakeBox(props) {
     createFaceMat(colorFront),
     createFaceMat(colorLeft),
     createFaceMat(colorRight),
-  ], [colorBottom, colorBack, colorFront, colorLeft, colorRight, isFeatureShowcase, extTex.map]);
+  ], [colorBottom, colorBack, colorFront, colorLeft, colorRight, isFeatureShowcase, extTexImgBlob, extTex.map]);
+
+  useEffect(() => {
+    if (trayMeshRef.current) {
+      trayMeshRef.current.material = trayMaterials;
+    }
+  }, [trayMaterials]);
 
   useEffect(() => {
     if (lidMatRef.current) {
@@ -182,10 +188,10 @@ export function CakeBox(props) {
         lidMatRef.current.map = extTex.map;
         lidMatRef.current.map.needsUpdate = true;
       }
-      lidMatRef.current.color = new THREE.Color(lidColorHex);
+      lidMatRef.current.color = new THREE.Color(isFeatureShowcase || extTexImgBlob ? '#FFFFFF' : lidColorHex);
       lidMatRef.current.needsUpdate = true;
     }
-  }, [lidColorHex, extTex.map]);
+  }, [lidColorHex, extTex.map, isFeatureShowcase, extTexImgBlob]);
 
   return (
     <group
