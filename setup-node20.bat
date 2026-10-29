@@ -15,6 +15,11 @@ if not exist ".env.local" (
     copy .env.example .env.local
 )
 
+if exist ".next" (
+    echo Cleaning stale Next.js cache (.next)...
+    rmdir /s /q .next
+)
+
 echo.
 echo Installing npm packages with Node 20...
 call .runtime\node20\npm.cmd install
